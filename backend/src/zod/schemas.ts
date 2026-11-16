@@ -11,6 +11,9 @@ export const loginSchema = z.object({
   password: z.string().min(1, "Password is required"),
 });
 export const idParamSchema = z.object({ id: z.string().uuid() });
+export const projectNameQuerySchema = z.object({
+  name: z.string().trim().min(1),
+});
 
 export const moveTaskSchema = z.object({
   position: z.number().int().nonnegative(),

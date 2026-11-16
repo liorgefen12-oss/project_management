@@ -2,7 +2,25 @@ import { readFile } from "node:fs/promises";
 import { sql, type Kysely } from "kysely";
 import { Pool } from "pg";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
-import { createProjectQueries } from "../database/queries.js";
+import {
+  getLogs,
+  getLogsByProjectId,
+  getLogsByProjectName,
+  getProjectSignInsAndOuts,
+  getUserLogins,
+} from "../database/queries/audit_logs.js";
+import {
+  getProjectTotalCostById,
+  getProjectTotalCostByName,
+  getProjectTotalValueById,
+  getProjectTotalValueByName,
+  getTaskPredecessors,
+  getTasksByProjectId,
+  getTasksByProjectIdAndStatus,
+  getTasksByProjectName,
+  getTasksByProjectNameAndStatus,
+  updateTaskPosition,
+} from "../database/queries/tasks.js";
 import type { Database } from "../database/types.js";
 import { createDatabase } from "../database/db.js";
 
@@ -20,7 +38,6 @@ describe.skipIf(!connectionString)(
   "PostgreSQL schema and project queries",
   () => {
     let database: Kysely<Database>;
-    let queries: ReturnType<typeof createProjectQueries>;
     let schemaCreated = false;
 
     beforeAll(async () => {
@@ -35,7 +52,6 @@ describe.skipIf(!connectionString)(
       database = createDatabase(
         new Pool({ connectionString, connectionTimeoutMillis: 5000 }),
       );
-      queries = createProjectQueries(database);
       const { rows } = await sql<{ count: string }>`
       select count(*)::text as count from information_schema.tables
       where table_schema in ('public', 'audit')
@@ -165,8 +181,8 @@ describe.skipIf(!connectionString)(
 
     it("lists only the requested project in position order, by id and by name", async () => {
       for (const tasks of [
-        await queries.getTasksByProjectId(projectId),
-        await queries.getTasksByProjectName("Main project"),
+        await getTasksByProjectId(database, projectId),
+        await getTasksByProjectName(database, "Main project"),
       ]) {
         expect(tasks.map((task) => task.task_id)).toEqual([
           firstId,
@@ -175,8 +191,90 @@ describe.skipIf(!connectionString)(
         ]);
         expect(tasks[0].executed).toBe(false);
       }
-      expect(await queries.getTasksByProjectId(missingId)).toEqual([]);
-      expect(await queries.getTasksByProjectName("' OR true --")).toEqual([]);
+      expect(await getTasksByProjectId(database, missingId)).toEqual([]);
+      expect(await getTasksByProjectName(database, "' OR true --")).toEqual([]);
+    });
+
+    it("filters audit logs by project id, project name, and action", async () => {
+      const user = await database
+        .insertInto("public.users")
+        .values({
+          first_name: "Test",
+          last_name: "User",
+          password: "test-only",
+          email: "audit-test@outlook.com",
+        })
+        .returning("user_id")
+        .executeTakeFirstOrThrow();
+      const actionNames = [
+        "user log in",
+        "project sign in",
+        "project sign out",
+        "task completed",
+      ];
+      const actions = await database
+        .insertInto("audit.task_actions")
+        .values(actionNames.map((action_name) => ({ action_name })))
+        .returning(["action_id", "action_name"])
+        .execute();
+      const actionIds = new Map(
+        actions.map((action) => [action.action_name, action.action_id]),
+      );
+
+      await database
+        .insertInto("audit.logs")
+        .values([
+          {
+            user_id: user.user_id,
+            action_id: actionIds.get("user log in")!,
+          },
+          {
+            user_id: user.user_id,
+            action_id: actionIds.get("project sign in")!,
+            project_id: projectId,
+          },
+          {
+            user_id: user.user_id,
+            action_id: actionIds.get("project sign out")!,
+            project_id: projectId,
+          },
+          {
+            user_id: user.user_id,
+            action_id: actionIds.get("task completed")!,
+            project_id: otherProjectId,
+            task_id: otherId,
+          },
+        ])
+        .execute();
+
+      const allLogs = await getLogs(database);
+      const projectIdLogs = await getLogsByProjectId(database, projectId);
+      const projectNameLogs = await getLogsByProjectName(
+        database,
+        "Main project",
+      );
+      const loginLogs = await getUserLogins(database);
+      const projectSignLogs = await getProjectSignInsAndOuts(database);
+
+      expect(allLogs).toHaveLength(4);
+      expect(projectIdLogs.map((log) => log.action_id).sort()).toEqual(
+        [
+          actionIds.get("project sign in"),
+          actionIds.get("project sign out"),
+        ].sort(),
+      );
+      expect(projectNameLogs.map((log) => log.action_id).sort()).toEqual(
+        projectIdLogs.map((log) => log.action_id).sort(),
+      );
+      expect(loginLogs.map((log) => log.action_id)).toEqual([
+        actionIds.get("user log in"),
+      ]);
+      expect(projectSignLogs.map((log) => log.action_id).sort()).toEqual(
+        [
+          actionIds.get("project sign in"),
+          actionIds.get("project sign out"),
+        ].sort(),
+      );
     });
 
     it.each([true, false])(
@@ -185,12 +283,12 @@ describe.skipIf(!connectionString)(
         const expected = completed ? [secondId] : [firstId, thirdId];
         expect(
           (
-            await queries.getTasksByProjectIdAndStatus(projectId, completed)
+            await getTasksByProjectIdAndStatus(database, projectId, completed)
           ).map((task) => task.task_id),
         ).toEqual(expected);
         expect(
           (
-            await queries.getTasksByProjectNameAndStatus(
+            await getTasksByProjectNameAndStatus(database, 
               "Main project",
               completed,
             )
@@ -200,50 +298,50 @@ describe.skipIf(!connectionString)(
     );
 
     it("returns exact bigint totals as strings and zero for empty or missing projects", async () => {
-      expect(await queries.getProjectTotalCostById(projectId)).toBe(
+      expect(await getProjectTotalCostById(database, projectId)).toBe(
         "4294967304",
       );
-      expect(await queries.getProjectTotalCostByName("Main project")).toBe(
+      expect(await getProjectTotalCostByName(database, "Main project")).toBe(
         "4294967304",
       );
-      expect(await queries.getProjectTotalValueById(projectId)).toBe("9");
-      expect(await queries.getProjectTotalValueByName("Main project")).toBe(
+      expect(await getProjectTotalValueById(database, projectId)).toBe("9");
+      expect(await getProjectTotalValueByName(database, "Main project")).toBe(
         "9",
       );
       for (const id of [emptyProjectId, missingId]) {
-        expect(await queries.getProjectTotalCostById(id)).toBe("0");
-        expect(await queries.getProjectTotalValueById(id)).toBe("0");
+        expect(await getProjectTotalCostById(database, id)).toBe("0");
+        expect(await getProjectTotalValueById(database, id)).toBe("0");
       }
       for (const name of ["Empty project", "' OR true --"]) {
-        expect(await queries.getProjectTotalCostByName(name)).toBe("0");
-        expect(await queries.getProjectTotalValueByName(name)).toBe("0");
+        expect(await getProjectTotalCostByName(database, name)).toBe("0");
+        expect(await getProjectTotalValueByName(database, name)).toBe("0");
       }
     });
 
     it("returns predecessors nearest-first and terminates on cycles", async () => {
       expect(
-        (await queries.getTaskPredecessors(thirdId)).map(
+        (await getTaskPredecessors(database, thirdId)).map(
           (task) => task.task_id,
         ),
       ).toEqual([secondId, firstId]);
-      expect(await queries.getTaskPredecessors(firstId)).toEqual([]);
-      expect(await queries.getTaskPredecessors(missingId)).toEqual([]);
+      expect(await getTaskPredecessors(database, firstId)).toEqual([]);
+      expect(await getTaskPredecessors(database, missingId)).toEqual([]);
       await database
         .updateTable("public.tasks")
         .set({ predecessor: thirdId })
         .where("task_id", "=", firstId)
         .execute();
       expect(
-        (await queries.getTaskPredecessors(thirdId)).map(
+        (await getTaskPredecessors(database, thirdId)).map(
           (task) => task.task_id,
         ),
       ).toEqual([secondId, firstId, thirdId]);
     });
 
     it("reorders in both directions, keeps other projects unchanged, and allows no-op moves", async () => {
-      await queries.updateTaskPosition(thirdId, 1);
+      await updateTaskPosition(database, thirdId, 1);
       expect(
-        (await queries.getTasksByProjectId(projectId)).map((task) => [
+        (await getTasksByProjectId(database, projectId)).map((task) => [
           task.task_id,
           task.position,
         ]),
@@ -252,33 +350,33 @@ describe.skipIf(!connectionString)(
         [firstId, 2],
         [secondId, 3],
       ]);
-      await queries.updateTaskPosition(thirdId, 3);
-      await queries.updateTaskPosition(thirdId, 3);
+      await updateTaskPosition(database, thirdId, 3);
+      await updateTaskPosition(database, thirdId, 3);
       expect(
-        (await queries.getTasksByProjectId(projectId)).map(
+        (await getTasksByProjectId(database, projectId)).map(
           (task) => task.task_id,
         ),
       ).toEqual([firstId, secondId, thirdId]);
       expect(
-        (await queries.getTasksByProjectId(otherProjectId))[0].position,
+        (await getTasksByProjectId(database, otherProjectId))[0].position,
       ).toBe(1);
     });
 
     it("surfaces invalid moves without changing task order", async () => {
-      await expect(queries.updateTaskPosition(missingId, 1)).rejects.toThrow(
+      await expect(updateTaskPosition(database, missingId, 1)).rejects.toThrow(
         "does not exist",
       );
-      await expect(queries.updateTaskPosition(firstId, 0)).rejects.toThrow(
+      await expect(updateTaskPosition(database, firstId, 0)).rejects.toThrow(
         "out of range",
       );
-      await expect(queries.updateTaskPosition(firstId, 4)).rejects.toThrow(
+      await expect(updateTaskPosition(database, firstId, 4)).rejects.toThrow(
         "out of range",
       );
-      await expect(queries.updateTaskPosition(firstId, 1.5)).rejects.toThrow(
+      await expect(updateTaskPosition(database, firstId, 1.5)).rejects.toThrow(
         "integer",
       );
       expect(
-        (await queries.getTasksByProjectId(projectId)).map(
+        (await getTasksByProjectId(database, projectId)).map(
           (task) => task.task_id,
         ),
       ).toEqual([firstId, secondId, thirdId]);

@@ -5,7 +5,11 @@ import helmet from "koa-helmet";
 import session from "koa-session";
 import type { Kysely } from "kysely";
 import type { Database } from "./database/db.js";
+import { auditLogsRouter } from "./routers/audit_logs.js";
 import { healthRouter } from "./routers/health.js";
+import { projectsRouter } from "./routers/projects.js";
+import { tasksRouter } from "./routers/tasks.js";
+import { usersRouter } from "./routers/authentication.js";
 import type { SessionStore } from "./sessionStore.js";
 
 declare module "koa" {
@@ -49,6 +53,11 @@ export function createApp(options: AppOptions) {
       app,
     ),
   );
+
+  app.use(usersRouter.routes()).use(usersRouter.allowedMethods());
+  app.use(projectsRouter.routes()).use(projectsRouter.allowedMethods());
+  app.use(tasksRouter.routes()).use(tasksRouter.allowedMethods());
+  app.use(auditLogsRouter.routes()).use(auditLogsRouter.allowedMethods());
 
   return app;
 }
