@@ -2,14 +2,15 @@ import cors from "@koa/cors";
 import { bodyParser } from "@koa/bodyparser";
 import Koa from "koa";
 import helmet from "koa-helmet";
-import session from "koa-session";
+import { errorHandler } from "./middlewares/errorHandler.js";
+import { createSessionMiddleware } from "./middlewares/session.js";
 import type { Kysely } from "kysely";
 import type { Database } from "./database/db.js";
 import { auditLogsRouter } from "./routers/audit_logs.js";
 import { healthRouter } from "./routers/health.js";
 import { projectsRouter } from "./routers/projects.js";
 import { tasksRouter } from "./routers/tasks.js";
-import { usersRouter } from "./routers/authentication.js";
+import { usersRouter } from "./routers/users.js";
 import type { SessionStore } from "./sessionStore.js";
 
 declare module "koa" {
@@ -28,7 +29,9 @@ export interface AppOptions {
 export function createApp(options: AppOptions) {
   const app = new Koa({ keys: [options.sessionSecret] });
 
+  app.use(errorHandler);
   app.use(helmet());
+  //CORS policy for reading different origins
   app.use(
     cors({
       origin: options.frontendOrigin,
@@ -38,20 +41,12 @@ export function createApp(options: AppOptions) {
   app.use(bodyParser());
   app.use(healthRouter.routes());
   app.use(healthRouter.allowedMethods());
+  //session
   app.use(
-    session(
-      {
-        store: options.sessionStore,
-        signed: true,
-        rolling: false,
-        renew: false,
-        httpOnly: true,
-        sameSite: "lax",
-        secure: options.isProduction,
-        maxAge: 8 * 60 * 60 * 1000,
-      },
-      app,
-    ),
+    createSessionMiddleware(app, {
+      store: options.sessionStore,
+      isProduction: options.isProduction,
+    }),
   );
 
   app.use(usersRouter.routes()).use(usersRouter.allowedMethods());

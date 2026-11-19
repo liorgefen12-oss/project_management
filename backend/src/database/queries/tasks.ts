@@ -1,0 +1,26 @@
+// Task queries live in tasks/; re-export them here to preserve existing imports.
+export { areTaskPredecessorsExecuted } from "./tasks/areTaskPredecessorsExecuted.js";
+export { getProjectBoardTasks } from "./tasks/getProjectBoardTasks.js";
+export { getProjectTaskPredecessors } from "./tasks/getProjectTaskPredecessors.js";
+export { getProjectTotalCostById } from "./tasks/getProjectTotalCostById.js";
+export { getProjectTotalCostByName } from "./tasks/getProjectTotalCostByName.js";
+export { getProjectTotalValueById } from "./tasks/getProjectTotalValueById.js";
+export { getProjectTotalValueByName } from "./tasks/getProjectTotalValueByName.js";
+export { getTaskAllPredecessors } from "./tasks/getTaskAllPredecessors.js";
+export { getTaskById } from "./tasks/getTaskById.js";
+export { getTaskByIdForUpdate } from "./tasks/getTaskByIdForUpdate.js";
+export { getTaskDirectPredecessors } from "./tasks/getTaskDirectPredecessors.js";
+export { getTaskExecutionStatus } from "./tasks/getTaskExecutionStatus.js";
+export { getTaskProject } from "./tasks/getTaskProject.js";
+export { getTaskProjectBudget } from "./tasks/getTaskProjectBudget.js";
+export { getTasksByName } from "./tasks/getTasksByName.js";
+export { getTasksByProjectId } from "./tasks/getTasksByProjectId.js";
+export { getTasksByProjectIdAndStatus } from "./tasks/getTasksByProjectIdAndStatus.js";
+export { getTasksByProjectName } from "./tasks/getTasksByProjectName.js";
+export { getTasksByProjectNameAndStatus } from "./tasks/getTasksByProjectNameAndStatus.js";
+export { insertTask } from "./tasks/insertTask.js";
+export { isExecuted } from "./tasks/isExecuted.js";
+export { lockProjectTaskChanges } from "./tasks/lockProjectTaskChanges.js";
+export { markExecuted } from "./tasks/markExecuted.js";
+export { updateTask } from "./tasks/updateTask.js";
+export { updateTaskPosition } from "./tasks/updateTaskPosition.js";

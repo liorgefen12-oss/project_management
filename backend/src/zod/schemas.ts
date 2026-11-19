@@ -1,22 +1,55 @@
 // validation/schemas.ts
 import { z } from "zod";
+import { messages } from "../messages.js";
 
-const uuid = z.string().uuid();
+const uuid = z.string().uuid().transform((id) => id.toLowerCase());
 
 export const loginSchema = z.object({
   email: z
     .string()
     .email()
-    .regex(/^[^@\s]+@outlook\.com$/i, "Must be an @outlook.com email"),
-  password: z.string().min(1, "Password is required"),
+    .regex(/^[^@\s]+@outlook\.com$/i, messages[400].outlookEmailRequired),
+  password: z.string().min(1, messages[400].passwordRequired),
 });
-export const idParamSchema = z.object({ id: z.string().uuid() });
+export const idParamSchema = z.object({ id: uuid });
 export const projectNameQuerySchema = z.object({
   name: z.string().trim().min(1),
 });
 
+// Full request schemas, as expected by the validate middleware
+export const loginRequestSchema = z.object({ body: loginSchema });
+export const idRequestSchema = z.object({ params: idParamSchema });
+export const projectNameRequestSchema = z.object({
+  query: projectNameQuerySchema,
+});
+
+export const auditLogsRequestSchema = z.object({
+  query: z.object({
+    type: z.enum(["user-logins", "project-sign-ins-and-outs"]).optional(),
+  }),
+});
+
+export const taskNameRequestSchema = z.object({
+  query: z.object({ name: z.string().trim().min(1) }),
+});
+
+export const projectTasksRequestSchema = z.object({
+  params: idParamSchema,
+  query: z.object({
+    executed: z.enum(["true", "false"])
+      .transform((value) => value === "true")
+      .optional(),
+  }),
+});
+
 export const moveTaskSchema = z.object({
-  position: z.number().int().nonnegative(),
+  position: z.number().int().positive(),
+}).strict();
+
+export const createProjectSchema = z.object({
+  name: z.string().trim().min(1).max(50),
+  description: z.string().max(250),
+  budget: z.number().int().nonnegative(),
 });
 
 export const createTaskSchema = z.object({
@@ -25,12 +58,31 @@ export const createTaskSchema = z.object({
   cost: z.number().int().nonnegative(),
   value: z.number().int().nonnegative(),
   steps: z.number().int().positive(),
-  predecessor: uuid.nullable().optional(),
+  position: z.number().int().positive(),
+  executed: z.boolean().optional(),
+  predecessor_ids: z
+    .array(uuid)
+    .refine((ids) => new Set(ids).size === ids.length, messages[400].duplicatePredecessors)
+    .optional(),
   project: uuid,
+}).strict();
+
+export const createProjectRequestSchema = z.object({
+  body: createProjectSchema,
 });
+export const createTaskRequestSchema = z.object({ body: createTaskSchema });
 
 // For edits, every field is optional, but at least one must be present
 export const updateTaskSchema = createTaskSchema
-  .omit({ project: true })
+  .omit({ project: true, position: true, executed: true })
   .partial()
-  .refine((d) => Object.keys(d).length > 0, "Nothing to update");
+  .refine((d) => Object.values(d).some((value) => value !== undefined), messages[400].nothingToUpdate);
+
+export const updateTaskRequestSchema = z.object({
+  params: idParamSchema,
+  body: updateTaskSchema,
+});
+export const moveTaskRequestSchema = z.object({
+  params: idParamSchema,
+  body: moveTaskSchema,
+});

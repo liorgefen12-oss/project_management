@@ -11,7 +11,7 @@ export interface UsersTable {
 export interface ProjectsTable {
   project_id: Generated<string>;
   budget: number;
-  value: number;
+  value: Generated<number>;
   description: string;
   name: string;
 }
@@ -23,10 +23,14 @@ export interface TasksTable {
   cost: number;
   value: number;
   steps: number;
-  predecessor: string | null;
   project: string;
   position: number;
   executed: Generated<boolean>;
+}
+
+export interface TaskPredecessorsTable {
+  task_id: string;
+  predecessor_id: string;
 }
 
 export interface TaskActionsTable {
@@ -48,6 +52,7 @@ export interface Database {
   'public.users': UsersTable;
   'public.projects': ProjectsTable;
   'public.tasks': TasksTable;
+  'public.task_predecessors': TaskPredecessorsTable;
   'audit.task_actions': TaskActionsTable;
   'audit.logs': LogsTable;
 }
@@ -56,3 +61,4 @@ export type Task = Selectable<TasksTable>;
 export type NewTask = Insertable<TasksTable>;
 export type TaskUpdate = Updateable<TasksTable>;
 export type Project = Selectable<ProjectsTable>;
+export type NewProject = Insertable<ProjectsTable>;

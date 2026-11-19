@@ -1,0 +1,718 @@
+{
+  "info": {
+    "name": "Fullstack Backend API",
+    "description": "Covers all current backend endpoints. Start the backend against the new task_predecessors schema, import this collection, and set baseUrl, email, and password in local collection variables. Use an existing database user. Run the entire collection in order: it creates a uniquely named project, two predecessor tasks, and a dependent task; saves their IDs automatically; verifies blocked execution; executes both predecessors; then verifies and executes the dependent task. Logout runs last. Postman stores session cookies automatically; keep the cookie jar enabled and use the same hostname. WARNING: every full run permanently creates test data, changes budgets/values, and writes audit logs. There are no cleanup/delete endpoints. Use a disposable test environment. For individual requests, run Login first and supply the relevant IDs from existing records or the creation requests. Keep credentials local and never export real passwords.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "noauth"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:3000", "type": "string" },
+    { "key": "email", "value": "", "type": "string" },
+    { "key": "password", "value": "", "type": "string" },
+    { "key": "projectId", "value": "", "type": "string" },
+    { "key": "projectName", "value": "", "type": "string" },
+    { "key": "taskId", "value": "", "type": "string" },
+    { "key": "firstPredecessorId", "value": "", "type": "string" },
+    { "key": "secondPredecessorId", "value": "", "type": "string" }
+  ],
+  "event": [
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "const noContentRequests = ['Sign in to project', 'Sign out of project', 'Logout'];",
+          "const createRequests = ['Create project', 'Create first predecessor task', 'Create second predecessor task', 'Create task with multiple predecessors'];",
+          "const conflictRequests = ['Execute task before predecessors', 'Execute task again'];",
+          "const expectedStatus = noContentRequests.includes(pm.info.requestName) ? 204 : createRequests.includes(pm.info.requestName) ? 201 : conflictRequests.includes(pm.info.requestName) ? 409 : 200;",
+          "pm.test('Returns expected HTTP status ' + expectedStatus, function () {",
+          "  pm.response.to.have.status(expectedStatus);",
+          "});"
+        ]
+      }
+    }
+  ],
+  "item": [
+    {
+      "name": "1. Health",
+      "item": [
+        {
+          "name": "Health check",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/health",
+            "description": "Does not require authentication or a database connection. Expected: 200 with { \"status\": \"ok\" }."
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. Authentication",
+      "item": [
+        {
+          "name": "Login",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{baseUrl}}/users/login",
+            "description": "Either enter your credentials directly in Body > raw > JSON, or leave the body as {} and set the email/password collection variables. The pre-request script only builds a body from variables when the body is {} and never overwrites manually entered JSON. Email must be an @outlook.com address. Expected: 200 and a session cookie. Invalid credentials: 401."
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.request.body.raw.trim() === '{}') {",
+                  "  pm.request.body.update(JSON.stringify({",
+                  "    email: pm.variables.get('email'),",
+                  "    password: pm.variables.get('password')",
+                  "  }));",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Current user",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/users/me",
+            "description": "Returns the logged-in user without the password. Expected: 200 after login, 401 without a valid session."
+          }
+        }
+      ]
+    },
+    {
+      "name": "3. Projects",
+      "item": [
+        {
+          "name": "Create project",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Postman project {{$guid}}\",\n  \"description\": \"Multiple-predecessor API test\",\n  \"budget\": 100\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{baseUrl}}/projects/",
+            "description": "Creates a fresh project with a generated name on every run. Do not send project_id: the database generates it. Saves projectId and projectName for subsequent requests. Returns 201; a duplicate name returns 409. WARNING: permanently inserts a project."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "  const project = pm.response.json();",
+                  "  pm.test('Project has a generated ID, initial budget, and zero value', function () {",
+                  "    pm.expect(project.project_id).to.match(/^[0-9a-f-]{36}$/i);",
+                  "    pm.expect(project.budget).to.eql(100);",
+                  "    pm.expect(project.value).to.eql(0);",
+                  "  });",
+                  "  pm.collectionVariables.set('projectId', project.project_id);",
+                  "  pm.collectionVariables.set('projectName', project.name);",
+                  "} else { pm.execution.setNextRequest(null); }"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "List projects",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/projects/",
+            "description": "Returns all projects. The creation request sets projectId/projectName automatically. To use an existing project instead, skip creation and copy its project_id and name into local collection variables."
+          }
+        },
+        {
+          "name": "Get project",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/projects/{{projectId}}",
+            "description": "Requires a valid project UUID. Expected: 200; malformed ID: 400; missing project: 404."
+          }
+        },
+        {
+          "name": "Get project by name",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/projects/by-name?name={{projectName}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["projects", "by-name"],
+              "query": [{ "key": "name", "value": "{{projectName}}" }]
+            },
+            "description": "Returns the project matching this exact name, including budget/value. Missing name returns 400; no matching project returns 404."
+          }
+        },
+        {
+          "name": "Check empty project completion",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/projects/{{projectId}}/completed",
+            "description": "Run before creating tasks. An empty project is not completed."
+          },
+          "event": [{
+            "listen": "test",
+            "script": {
+              "type": "text/javascript",
+              "exec": [
+                "pm.test('An empty project is not completed', function () {",
+                "  pm.expect(pm.response.json()).to.eql({ project_id: pm.collectionVariables.get('projectId'), completed: false });",
+                "});"
+              ]
+            }
+          }]
+        },
+        {
+          "name": "Sign in to project",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/projects/{{projectId}}/sign-in",
+            "description": "Records a project sign-in event for the authenticated user. No body required. Each call creates an audit record. Expected: 204."
+          }
+        },
+        {
+          "name": "List project tasks",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/projects/{{projectId}}/tasks",
+            "description": "Returns task fields in board order, without embedded predecessor data. Empty for the newly created project until tasks are added. To test an existing task manually, copy its task_id into taskId."
+          }
+        }
+      ]
+    },
+    {
+      "name": "4. Tasks - changes database",
+      "description": "Run after Create project. Creates two unexecuted tasks and one task depending on both, proves it is blocked, executes both predecessors, then executes the dependent task. Initial project budget must cover 40 total cost. On this fresh fixture the final budget is 60 and value is 20. Do not rerun this folder on the same project without choosing unused positions or creating another project. WARNING: writes permanent task and audit records and changes project budget/value.",
+      "item": [
+        {
+          "name": "Create first predecessor task",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"task_name\": \"First prerequisite\",\n  \"description\": \"First branch of the dependency graph\",\n  \"cost\": 10,\n  \"value\": 5,\n  \"steps\": 1,\n  \"position\": 1,\n  \"executed\": false,\n  \"predecessor_ids\": [],\n  \"project\": \"{{projectId}}\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{baseUrl}}/tasks/",
+            "description": "Creates a task without predecessors. task_id is generated by the database. Saves firstPredecessorId. Empty predecessor_ids and an omitted predecessor_ids field both mean no dependencies. Returns 201."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "  const task = pm.response.json();",
+                  "  pm.collectionVariables.set('firstPredecessorId', task.task_id);",
+                  "  pm.test('First predecessor starts unexecuted without dependencies', function () {",
+                  "    pm.expect(task.executed).to.eql(false);",
+                  "    pm.expect(task).not.to.have.property('predecessor_ids');",
+                  "  });",
+                  "} else { pm.execution.setNextRequest(null); }"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create second predecessor task",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"task_name\": \"Second prerequisite\",\n  \"description\": \"Second branch of the dependency graph\",\n  \"cost\": 10,\n  \"value\": 5,\n  \"steps\": 1,\n  \"position\": 2,\n  \"project\": \"{{projectId}}\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{baseUrl}}/tasks/",
+            "description": "Creates the other predecessor. Omits executed (defaults to false) and predecessor_ids (defaults to []). Saves secondPredecessorId. Returns 201."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "  const task = pm.response.json();",
+                  "  pm.collectionVariables.set('secondPredecessorId', task.task_id);",
+                  "  pm.test('Omitted execution status and dependencies receive defaults', function () {",
+                  "    pm.expect(task.executed).to.eql(false);",
+                  "    pm.expect(task).not.to.have.property('predecessor_ids');",
+                  "  });",
+                  "} else { pm.execution.setNextRequest(null); }"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create task with multiple predecessors",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"task_name\": \"Dependent task\",\n  \"description\": \"Requires both prerequisites to be executed\",\n  \"cost\": 20,\n  \"value\": 10,\n  \"steps\": 2,\n  \"position\": 3,\n  \"executed\": false,\n  \"predecessor_ids\": [\"{{firstPredecessorId}}\", \"{{secondPredecessorId}}\"],\n  \"project\": \"{{projectId}}\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{baseUrl}}/tasks/",
+            "description": "Saves taskId for all following dependent-task requests. Both predecessor IDs must refer to existing tasks in the same project. Duplicate/malformed IDs or the legacy predecessor field return 400; missing projects/predecessors return 404; an occupied position returns 409. Returns 201."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "  const task = pm.response.json();",
+                  "  pm.collectionVariables.set('taskId', task.task_id);",
+                  "  pm.test('Created task does not embed predecessor data', function () {",
+                  "    pm.expect(task).not.to.have.property('predecessor_ids');",
+                  "  });",
+                  "} else { pm.execution.setNextRequest(null); }"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get task by ID",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/tasks/{{taskId}}",
+            "description": "Returns task fields including cost, value, execution state, and owning project ID, without embedded predecessor data. Missing task returns 404."
+          }
+        },
+        {
+          "name": "Get tasks by name",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/tasks/by-name?name=Dependent%20task",
+              "host": ["{{baseUrl}}"],
+              "path": ["tasks", "by-name"],
+              "query": [{ "key": "name", "value": "Dependent task" }]
+            },
+            "description": "Run before Edit task renames it. Returns all exact task-name matches across projects, or an empty array if none match."
+          },
+          "event": [{
+            "listen": "test",
+            "script": {
+              "type": "text/javascript",
+              "exec": [
+                "pm.test('Name lookup includes the created task', function () {",
+                "  pm.expect(pm.response.json().map(task => task.task_id)).to.include(pm.collectionVariables.get('taskId'));",
+                "});"
+              ]
+            }
+          }]
+        },
+        {
+          "name": "Get project by task",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/projects/by-task/{{taskId}}",
+            "description": "Returns the task's full owning project, including budget and value. The ID in this path is a task ID, not a project ID."
+          },
+          "event": [{
+            "listen": "test",
+            "script": {
+              "type": "text/javascript",
+              "exec": [
+                "pm.test('Task belongs to the created project', function () {",
+                "  pm.expect(pm.response.json().project_id).to.eql(pm.collectionVariables.get('projectId'));",
+                "});"
+              ]
+            }
+          }]
+        },
+        {
+          "name": "Edit task",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"task_name\": \"Updated dependent task\",\n  \"predecessor_ids\": [\"{{firstPredecessorId}}\", \"{{secondPredecessorId}}\"]\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{baseUrl}}/tasks/{{taskId}}",
+            "description": "Edits an unexecuted task. Returns 200 with { message, task }. Omitted fields are preserved; predecessor_ids replaces dependencies ([] removes all). Self-links, cycles, duplicates, and cross-project dependencies return 400. Executed tasks return 409."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Task edit returns task fields without predecessor data', function () {",
+                  "  const task = pm.response.json().task;",
+                  "  pm.expect(task.task_name).to.eql('Updated dependent task');",
+                  "  pm.expect(task).not.to.have.property('predecessor_ids');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Move task",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"position\": 2\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{baseUrl}}/tasks/{{firstPredecessorId}}/position",
+            "description": "Moves the first predecessor behind the independent second predecessor while keeping both before the dependent task. Moves that put a task before one of its predecessors or a dependent task before it return 400."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Board is returned in its new order', function () {",
+                  "  const tasks = pm.response.json().tasks;",
+                  "  pm.expect(tasks.map(task => task.position)).to.eql([1, 2, 3]);",
+                  "  pm.expect(tasks.map(task => task.task_id)).to.eql([pm.collectionVariables.get('secondPredecessorId'), pm.collectionVariables.get('firstPredecessorId'), pm.collectionVariables.get('taskId')]);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get task predecessors",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/tasks/{{taskId}}/predecessors",
+            "description": "Read-only. Returns all direct and indirect predecessors once, nearest first, as objects containing only task_id and executed. Empty array if there are no predecessors; 404 if the task does not exist."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Both predecessors are returned without duplicates', function () {",
+                  "  const predecessors = pm.response.json();",
+                  "  predecessors.forEach(task => pm.expect(Object.keys(task).sort()).to.eql(['executed', 'task_id']));",
+                  "  pm.expect(predecessors.map(task => task.task_id)).to.have.members([pm.collectionVariables.get('firstPredecessorId'), pm.collectionVariables.get('secondPredecessorId')]);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Check task blocked by predecessors",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/tasks/{{taskId}}/executable",
+            "description": "Run before executing either predecessor. Expected: 200 with the JSON boolean false. Does not mutate the database or create an audit log."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Unfinished predecessors block execution', function () {",
+                  "  pm.expect(pm.response.json()).to.eql(false);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Execute task before predecessors",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/tasks/{{taskId}}/execute",
+            "description": "Intentionally rejected with 409 because predecessors are unfinished. The task and budget remain unchanged, but an unavailable-task audit log is written. This 409 is expected and passes the collection's status assertion."
+          }
+        },
+        {
+          "name": "Execute first predecessor",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/tasks/{{firstPredecessorId}}/execute",
+            "description": "Executes the first prerequisite. Expected: 200. Deducts 10 budget and adds 5 value."
+          }
+        },
+        {
+          "name": "Check task still blocked by second predecessor",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/tasks/{{taskId}}/executable",
+            "description": "Proves executing only one predecessor is not enough. Expected: 200 with the JSON boolean false."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('All predecessors, not just one, must be executed', function () {",
+                  "  pm.expect(pm.response.json()).to.eql(false);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Execute second predecessor",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/tasks/{{secondPredecessorId}}/execute",
+            "description": "Executes the second prerequisite. Expected: 200. Deducts another 10 budget and adds 5 value."
+          }
+        },
+        {
+          "name": "Check task executability",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/tasks/{{taskId}}/executable",
+            "description": "Read-only. Returns only the JSON boolean true or false. Requires an unexecuted task, enough project budget, and every predecessor on every branch to exist and be executed without cycles. This is a snapshot, not a budget reservation."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('The task is executable after both predecessors complete', function () {",
+                  "  pm.expect(pm.response.json()).to.eql(true);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Execute task",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/tasks/{{taskId}}/execute",
+            "description": "WARNING: marks the selected task executed, deducts its cost from the project's budget, adds its value, and creates audit records. May also record project completion. No body required. Expected: 200 with project_id, budget, value. Returns 409 if already executed, a predecessor is unfinished, or budget is insufficient; blocked predecessor/budget attempts create an audit record. Repeating a successful execution returns 409. This request is included in collection runs."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Execution deducts cost and adds value exactly once', function () {",
+                  "  pm.expect(pm.response.json()).to.eql({ project_id: pm.collectionVariables.get('projectId'), budget: 60, value: 20 });",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Check executed task is no longer executable",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/tasks/{{taskId}}/executable",
+            "description": "Expected: 200 with the JSON boolean false because the task is already executed."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('An executed task cannot execute again', function () {",
+                  "  pm.expect(pm.response.json()).to.eql(false);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Check project completion",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/projects/{{projectId}}/completed",
+            "description": "Run after all three tasks execute. Returns completed=true only when at least one task exists and every task is executed."
+          },
+          "event": [{
+            "listen": "test",
+            "script": {
+              "type": "text/javascript",
+              "exec": [
+                "pm.test('All tasks completed the project', function () {",
+                "  pm.expect(pm.response.json()).to.eql({ project_id: pm.collectionVariables.get('projectId'), completed: true });",
+                "});"
+              ]
+            }
+          }]
+        },
+        {
+          "name": "List executed project tasks",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/projects/{{projectId}}/tasks?executed=true",
+            "description": "Returns only executed tasks in board order, with the same fields as the unfiltered board."
+          },
+          "event": [{
+            "listen": "test",
+            "script": {
+              "type": "text/javascript",
+              "exec": [
+                "pm.test('All three tasks are executed', function () {",
+                "  const tasks = pm.response.json();",
+                "  pm.expect(tasks).to.have.lengthOf(3);",
+                "  pm.expect(tasks.every(task => task.executed)).to.eql(true);",
+                "});"
+              ]
+            }
+          }]
+        },
+        {
+          "name": "List unexecuted project tasks",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/projects/{{projectId}}/tasks?executed=false",
+            "description": "Returns only unexecuted tasks. Expected to be empty after completing this collection's three tasks."
+          },
+          "event": [{
+            "listen": "test",
+            "script": {
+              "type": "text/javascript",
+              "exec": [
+                "pm.test('No tasks remain unexecuted', function () {",
+                "  pm.expect(pm.response.json()).to.eql([]);",
+                "});"
+              ]
+            }
+          }]
+        },
+        {
+          "name": "Execute task again",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/tasks/{{taskId}}/execute",
+            "description": "Intentionally retries the completed task. Expected: 409, without another budget deduction or execution audit. This expected conflict passes the collection's status assertion."
+          }
+        }
+      ]
+    },
+    {
+      "name": "5. Leave project",
+      "item": [
+        {
+          "name": "Sign out of project",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/projects/{{projectId}}/sign-out",
+            "description": "Records a project sign-out event for the authenticated user. Does not log out the user. No body required. Each call creates an audit record. Expected: 204."
+          }
+        }
+      ]
+    },
+    {
+      "name": "6. Audit logs",
+      "description": "All audit endpoints require login, return arrays of log records, and are available to any authenticated user. Results are ordered newest first. Filters with no matching records return an empty array.",
+      "item": [
+        {
+          "name": "All audit logs",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/audit-logs"
+          }
+        },
+        {
+          "name": "Audit logs by project ID",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/audit-logs/projects/{{projectId}}"
+          }
+        },
+        {
+          "name": "Audit logs by project name",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/audit-logs/projects/by-name?name={{projectName}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["audit-logs", "projects", "by-name"],
+              "query": [
+                { "key": "name", "value": "{{projectName}}" }
+              ]
+            },
+            "description": "Set projectName to the exact project name. The name query parameter is required."
+          }
+        },
+        {
+          "name": "User login audit logs",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/audit-logs?type=user-logins",
+            "description": "Returns records whose action is user log in."
+          }
+        },
+        {
+          "name": "Project sign-in and sign-out audit logs",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/audit-logs?type=project-sign-ins-and-outs",
+            "description": "Returns records whose action is project sign in or project sign out."
+          }
+        }
+      ]
+    },
+    {
+      "name": "7. End session - run last",
+      "item": [
+        {
+          "name": "Logout",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/users/logout",
+            "description": "Creates a user log out record and clears the session. No body required. Expected: 204. Protected requests will return 401 until you log in again."
+          }
+        }
+      ]
+    }
+  ]
+}

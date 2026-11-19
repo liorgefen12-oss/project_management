@@ -2,6 +2,7 @@ import type { Kysely } from "kysely";
 import type { Database } from "../types.js";
 
 type Db = Kysely<Database>;
+export type AuditLogType = "user-logins" | "project-sign-ins-and-outs";
 
 const logsByRecentFirst = (db: Db) =>
   db
@@ -33,7 +34,16 @@ export async function logAction(
     .execute();
 }
 
-export function getLogs(db: Db) {
+export function getLogs(db: Db, type?: AuditLogType) {
+  if (type === "user-logins") {
+    return getLogsByActionNames(db, ["user log in"]).execute();
+  }
+  if (type === "project-sign-ins-and-outs") {
+    return getLogsByActionNames(db, [
+      "project sign in",
+      "project sign out",
+    ]).execute();
+  }
   return logsByRecentFirst(db).execute();
 }
 
@@ -62,15 +72,4 @@ function getLogsByActionNames(db: Db, actionNames: string[]) {
     .where("a.action_name", "in", actionNames)
     .orderBy("l.created_at", "desc")
     .orderBy("l.log_id", "desc");
-}
-
-export function getUserLogins(db: Db) {
-  return getLogsByActionNames(db, ["user log in"]).execute();
-}
-
-export function getProjectSignInsAndOuts(db: Db) {
-  return getLogsByActionNames(db, [
-    "project sign in",
-    "project sign out",
-  ]).execute();
 }
