@@ -1,7 +1,7 @@
 {
   "info": {
     "name": "Fullstack Backend API",
-    "description": "Covers all current backend endpoints. Start the backend against the new task_predecessors schema, import this collection, and set baseUrl, email, and password in local collection variables. Use an existing database user. Run the entire collection in order: it creates a uniquely named project, two predecessor tasks, and a dependent task; saves their IDs automatically; verifies blocked execution; executes both predecessors; then verifies and executes the dependent task. Logout runs last. Postman stores session cookies automatically; keep the cookie jar enabled and use the same hostname. WARNING: every full run permanently creates test data, changes budgets/values, and writes audit logs. There are no cleanup/delete endpoints. Use a disposable test environment. For individual requests, run Login first and supply the relevant IDs from existing records or the creation requests. Keep credentials local and never export real passwords.",
+    "description": "Covers all current backend endpoints. Start the backend against the new task_predecessors schema, import this collection, and set baseUrl, email, and password in local collection variables. Use an existing database user. Run the entire collection in order: it creates a uniquely named project and edits it (restoring its budget afterwards), then creates two predecessor tasks, and a dependent task; saves their IDs automatically; verifies blocked execution; executes both predecessors; then verifies and executes the dependent task. Logout runs last. Postman stores session cookies automatically; keep the cookie jar enabled and use the same hostname. WARNING: every full run permanently creates test data, changes budgets/values, and writes audit logs. There are no cleanup/delete endpoints. Use a disposable test environment. For individual requests, run Login first and supply the relevant IDs from existing records or the creation requests. Keep credentials local and never export real passwords.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "auth": {
@@ -26,7 +26,8 @@
           "const noContentRequests = ['Sign in to project', 'Sign out of project', 'Logout'];",
           "const createRequests = ['Create project', 'Create first predecessor task', 'Create second predecessor task', 'Create task with multiple predecessors'];",
           "const conflictRequests = ['Execute task before predecessors', 'Execute task again'];",
-          "const expectedStatus = noContentRequests.includes(pm.info.requestName) ? 204 : createRequests.includes(pm.info.requestName) ? 201 : conflictRequests.includes(pm.info.requestName) ? 409 : 200;",
+          "const badRequestRequests = ['Edit project with nothing to update'];",
+          "const expectedStatus = noContentRequests.includes(pm.info.requestName) ? 204 : createRequests.includes(pm.info.requestName) ? 201 : conflictRequests.includes(pm.info.requestName) ? 409 : badRequestRequests.includes(pm.info.requestName) ? 400 : 200;",
           "pm.test('Returns expected HTTP status ' + expectedStatus, function () {",
           "  pm.response.to.have.status(expectedStatus);",
           "});"
@@ -105,11 +106,11 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"Postman project {{$guid}}\",\n  \"description\": \"Multiple-predecessor API test\",\n  \"budget\": 100\n}",
+              "raw": "{\n  \"name\": \"Postman project {{$guid}}\",\n  \"description\": \"Multiple-predecessor API test\",\n  \"budget\": 100,\n  \"goals\": { \"steps\": 4, \"cost\": 40 }\n}",
               "options": { "raw": { "language": "json" } }
             },
             "url": "{{baseUrl}}/projects/",
-            "description": "Creates a fresh project with a generated name on every run. Do not send project_id: the database generates it. Saves projectId and projectName for subsequent requests. Returns 201; a duplicate name returns 409. WARNING: permanently inserts a project."
+            "description": "Creates a fresh project with a generated name on every run. Do not send project_id: the database generates it. goals is optional ({ steps, cost }, non-negative integers); omit it for a project without goals. Saves projectId and projectName for subsequent requests. Returns 201; a duplicate name returns 409. WARNING: permanently inserts a project."
           },
           "event": [
             {
@@ -119,10 +120,11 @@
                 "exec": [
                   "if (pm.response.code === 201) {",
                   "  const project = pm.response.json();",
-                  "  pm.test('Project has a generated ID, initial budget, and zero value', function () {",
+                  "  pm.test('Project has a generated ID, initial budget, zero value, and goals', function () {",
                   "    pm.expect(project.project_id).to.match(/^[0-9a-f-]{36}$/i);",
                   "    pm.expect(project.budget).to.eql(100);",
                   "    pm.expect(project.value).to.eql(0);",
+                  "    pm.expect(project.goals).to.eql({ steps: 4, cost: 40 });",
                   "  });",
                   "  pm.collectionVariables.set('projectId', project.project_id);",
                   "  pm.collectionVariables.set('projectName', project.name);",
@@ -159,6 +161,86 @@
               "query": [{ "key": "name", "value": "{{projectName}}" }]
             },
             "description": "Returns the project matching this exact name, including budget/value. Missing name returns 400; no matching project returns 404."
+          }
+        },
+        {
+          "name": "Edit project",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"description\": \"Edited by Postman\",\n  \"budget\": 150,\n  \"goals\": { \"steps\": 5, \"cost\": 45 }\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{baseUrl}}/projects/{{projectId}}",
+            "description": "Edits name, description, budget (the remaining budget) and/or goals. Returns 200 with { message, project }. Omitted fields are preserved; goals: null clears the goals. value cannot be edited (it only changes by executing tasks) and unknown fields return 400. An empty body returns 400, a name already used by another project returns 409, and a missing project returns 404. Changing the budget writes a 'budget changed' audit record. WARNING: permanently changes the project."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Project edit returns the updated project and keeps omitted fields', function () {",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body.message).to.eql('Project updated successfully');",
+                  "  pm.expect(body.project).to.include({ project_id: pm.collectionVariables.get('projectId'), name: pm.collectionVariables.get('projectName'), description: 'Edited by Postman', budget: 150, value: 0 });",
+                  "  pm.expect(body.project.goals).to.eql({ steps: 5, cost: 45 });",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Edit project - clear goals and restore budget",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"budget\": 100,\n  \"goals\": null\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{baseUrl}}/projects/{{projectId}}",
+            "description": "Clears the goals and puts the budget back to 100, which the task folder's budget assertions rely on. Expected: 200."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Goals are cleared and the budget is restored', function () {",
+                  "  const project = pm.response.json().project;",
+                  "  pm.expect(project.goals).to.eql(null);",
+                  "  pm.expect(project.budget).to.eql(100);",
+                  "  pm.expect(project.description).to.eql('Edited by Postman');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Edit project with nothing to update",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{baseUrl}}/projects/{{projectId}}",
+            "description": "Intentionally rejected: an edit must change at least one field. Expected: 400, and the project is unchanged. This expected error passes the collection's status assertion."
           }
         },
         {
@@ -310,30 +392,6 @@
             "url": "{{baseUrl}}/tasks/{{taskId}}",
             "description": "Returns task fields including cost, value, execution state, and owning project ID, without embedded predecessor data. Missing task returns 404."
           }
-        },
-        {
-          "name": "Get tasks by name",
-          "request": {
-            "method": "GET",
-            "url": {
-              "raw": "{{baseUrl}}/tasks/by-name?name=Dependent%20task",
-              "host": ["{{baseUrl}}"],
-              "path": ["tasks", "by-name"],
-              "query": [{ "key": "name", "value": "Dependent task" }]
-            },
-            "description": "Run before Edit task renames it. Returns all exact task-name matches across projects, or an empty array if none match."
-          },
-          "event": [{
-            "listen": "test",
-            "script": {
-              "type": "text/javascript",
-              "exec": [
-                "pm.test('Name lookup includes the created task', function () {",
-                "  pm.expect(pm.response.json().map(task => task.task_id)).to.include(pm.collectionVariables.get('taskId'));",
-                "});"
-              ]
-            }
-          }]
         },
         {
           "name": "Get project by task",

@@ -6,7 +6,7 @@ import "../styles/TaskCard.css";
 
 type TaskCardProps = {
   task: BoardTask;
-  taskNames: Map<string, string>;
+  tasksById: Map<string, BoardTask>;
   onExecute: (taskId: string) => void;
   onEdit: (taskId: string) => void;
   isExecuting?: boolean;
@@ -18,7 +18,7 @@ type TaskCardProps = {
 
 export default function TaskCard({
   task,
-  taskNames,
+  tasksById,
   onExecute,
   onEdit,
   isExecuting = false,
@@ -27,20 +27,30 @@ export default function TaskCard({
   onDragStart,
   onDragEnd,
 }: TaskCardProps) {
-  // Executed tasks can never run again, so skip the readiness check for them
   const executable = useTaskExecutability(
     task.executed ? undefined : task.task_id,
   );
   const predecessors = useTaskPredecessors(task.task_id);
 
-  const predecessorList = (predecessors.data ?? []).map((p) => ({
-    id: p.task_id,
-    name: taskNames.get(p.task_id) ?? "Unknown task",
-    executed: p.executed,
-  }));
+  const predecessorList = (predecessors.data ?? [])
+    .map((p) => {
+      const predecessor = tasksById.get(p.task_id);
+      return {
+        id: p.task_id,
+        name: predecessor?.task_name ?? "Unknown task",
+        position: predecessor?.position,
+        executed: p.executed,
+      };
+    })
+    .sort((a, b) => (a.position ?? Infinity) - (b.position ?? Infinity));
   const predecessorsTitle = predecessorList
-    .map((p) => `${p.name}${p.executed ? " (executed)" : " (waiting)"}`)
+    .map(
+      (p) =>
+        `#${p.position ?? "?"} ${p.name}${p.executed ? " (executed)" : " (waiting)"}`,
+    )
     .join(", ");
+  //display predecessor's name + execution status
+
   const blocked = !task.executed && executable.data === false;
 
   const classes = [
@@ -106,22 +116,20 @@ export default function TaskCard({
         {predecessorList.length === 0 ? (
           <span className="task-card__predecessors muted">None</span>
         ) : (
-          <span className="task-card__predecessors" title={predecessorsTitle}>
-            {predecessorList.map((p, i) => (
-              <span key={p.id}>
-                {i > 0 && ", "}
-                <span
-                  className={
-                    p.executed
-                      ? "task-card__predecessor--done"
-                      : "task-card__predecessor--waiting"
-                  }
-                >
-                  {p.name}
-                </span>
-              </span>
+          <ul className="task-card__predecessors" title={predecessorsTitle}>
+            {predecessorList.map((p) => (
+              <li
+                key={p.id}
+                className={
+                  p.executed
+                    ? "task-card__predecessor--done"
+                    : "task-card__predecessor--waiting"
+                }
+              >
+                #{p.position ?? "?"} {p.name}
+              </li>
             ))}
-          </span>
+          </ul>
         )}
       </div>
       <div className="task-card__footer">
@@ -129,7 +137,7 @@ export default function TaskCard({
           type="button"
           className={`task-card__execute${task.executed ? " task-card__execute--done" : ""}`}
           onClick={() => onExecute(task.task_id)}
-          // Unavailable tasks stay clickable: the attempt is audited and explained in a popup
+          //tasks with predecessors look unclickable, but arent, to audit log the execution attempts
           disabled={task.executed || isExecuting}
           title={executeTitle}
           draggable={false}

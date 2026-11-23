@@ -18,7 +18,19 @@
       budget integer NOT NULL,
       value integer NOT NULL DEFAULT 0,
       description varchar(250) NOT NULL,
-      name varchar(50) NOT NULL UNIQUE
+      name varchar(50) NOT NULL UNIQUE,
+      -- display-only recommendation: { "steps": number, "cost": number }
+      goals jsonb,
+      CONSTRAINT projects_goals_shape CHECK (
+        goals IS NULL OR (
+          jsonb_typeof(goals) = 'object'
+          AND goals ?& ARRAY['steps', 'cost']
+          AND jsonb_typeof(goals->'steps') = 'number'
+          AND jsonb_typeof(goals->'cost') = 'number'
+          AND (goals->>'steps')::numeric >= 0
+          AND (goals->>'cost')::numeric >= 0
+        )
+      )
     );
 
     CREATE TABLE public.tasks (

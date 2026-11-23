@@ -17,7 +17,7 @@ export const queryKeys = {
     detail: projectDetail,
     byName: (name: string) => ["projects", "by-name", name] as const,
     completion: (projectId: string) =>
-      [...projectDetail(projectId), "completed"] as const,
+      [...projectDetail(projectId), "completion-status"] as const,
     allTasks: projectAllTasks,
     tasks: (projectId: string, executed?: boolean) =>
       [...projectAllTasks(projectId), executed ?? "all"] as const,

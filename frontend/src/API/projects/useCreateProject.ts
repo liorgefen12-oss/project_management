@@ -14,6 +14,7 @@ export function useCreateProject() {
     onSuccess: (project) => {
       qc.setQueryData(queryKeys.projects.detail(project.project_id), project);
       qc.invalidateQueries({ queryKey: queryKeys.projects.list() });
+      //invalidate all projects' cache (automatically refetched)
     },
   });
 }

@@ -12,7 +12,7 @@ const filters: { value: TaskFilter; label: string }[] = [
 
 type TasksBoardProps = {
   tasks: BoardTask[];
-  taskNames: Map<string, string>;
+  tasksById: Map<string, BoardTask>;
   filter: TaskFilter;
   onFilterChange: (filter: TaskFilter) => void;
   onExecute: (taskId: string) => void;
@@ -25,7 +25,7 @@ type TasksBoardProps = {
 
 export default function TasksBoard({
   tasks,
-  taskNames,
+  tasksById,
   filter,
   onFilterChange,
   onExecute,
@@ -48,15 +48,21 @@ export default function TasksBoard({
   function drop(position: number) {
     const dragged = tasks.find((task) => task.task_id === draggedId);
     endDrag();
-    if (dragged && dragged.position !== position) onMove(dragged.task_id, position);
+    if (dragged && dragged.position !== position)
+      onMove(dragged.task_id, position);
   }
 
   return (
     <section className="panel" aria-label="Tasks board">
       <div className="tasks-board__head">
         <h2 className="panel__title">Tasks</h2>
-        <div className="tasks-board__filters" role="group" aria-label="Filter tasks">
+        <div
+          className="tasks-board__filters"
+          role="group"
+          aria-label="Filter tasks"
+        >
           {filters.map((f) => (
+            //for each filter, display as html element
             <button
               key={f.value}
               type="button"
@@ -73,13 +79,16 @@ export default function TasksBoard({
         </button>
       </div>
       {canReorder && tasks.length > 1 && (
-        <p className="tasks-board__hint muted">Drag a card onto another position to reorder.</p>
+        <p className="tasks-board__hint muted">
+          Drag a card onto another position to reorder.
+        </p>
       )}
       {tasks.length === 0 ? (
         <p className="muted">No tasks to show.</p>
       ) : (
         <div className="tasks-board__grid">
           {tasks.map((task) => (
+            //show each task
             <div
               key={task.task_id}
               className={`tasks-board__cell${dropPosition === task.position ? " tasks-board__cell--drop" : ""}`}
@@ -96,7 +105,7 @@ export default function TasksBoard({
             >
               <TaskCard
                 task={task}
-                taskNames={taskNames}
+                tasksById={tasksById}
                 onExecute={onExecute}
                 onEdit={onEdit}
                 isExecuting={executingTaskId === task.task_id}

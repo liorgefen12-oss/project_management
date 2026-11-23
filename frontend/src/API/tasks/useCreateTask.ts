@@ -10,7 +10,8 @@ export function useCreateTask() {
       apiFetch<Task>("/tasks", { method: "POST", body: JSON.stringify(task) }),
     onSuccess: (task) => {
       client.setQueryData(queryKeys.tasks.detail(task.task_id), task);
-      // Board order and project completion both change
+      //saved in cache as ["projects", "{task.task_id}"].
+
       client.invalidateQueries({
         queryKey: queryKeys.projects.detail(task.project),
       });

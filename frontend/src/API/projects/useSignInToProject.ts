@@ -9,6 +9,7 @@ export function useSignInToProject() {
       apiFetch<void>(`/projects/${projectId}/sign-in`, { method: "POST" }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: queryKeys.auditLogs.all });
+      //invalidate current catch so it'll be refetched with the new sign in log
     },
   });
 }

@@ -95,7 +95,6 @@ the same project will conflict with previously used positions.
 | `POST` | `/projects/:id/sign-in` | Yes | Record opening or joining a project board; returns 204 |
 | `POST` | `/projects/:id/sign-out` | Yes | Record leaving or closing a project board; returns 204 |
 | `POST` | `/tasks/` | Yes | Create a task with optional `predecessor_ids`; returns 201 (400 if placed before a predecessor, 409 if the position is taken) |
-| `GET` | `/tasks/by-name?name=...` | Yes | Return all tasks with this exact name across projects; an empty array if none match |
 | `GET` | `/tasks/:id` | Yes | Get a task, including cost, value, and owning project ID; 404 if missing |
 | `PATCH` | `/tasks/:id` | Yes | Edit an unexecuted task; returns 200 with `{ message, task }` |
 | `PATCH` | `/tasks/:id/position` | Yes | Reorder a task and shift its neighbors without placing tasks before their predecessors; returns 200 with `{ message, tasks }` (the updated board) |
@@ -120,10 +119,9 @@ Malformed JSON returns 400 with the shared malformed-JSON message.
 
 ### Lookups and project status
 
-Name lookups trim surrounding whitespace and match the exact, case-sensitive
-name. Task names are not unique, so task-name lookup returns an array; project
-names are unique, so project-name lookup returns one object. Both require a
-nonempty `name` query parameter (400 otherwise).
+Project-name lookup trims surrounding whitespace and matches the exact,
+case-sensitive name. Project names are unique, so it returns one object. It
+requires a nonempty `name` query parameter (400 otherwise).
 
 For board filtering, omitting `executed` returns all tasks. Only the literal
 strings `true` and `false` are accepted; other values return 400. Filtered results
@@ -258,7 +256,6 @@ The helpers match the stored functions using camelCase names:
 | `getProjectTotalValueById`, `getProjectTotalValueByName` | Sum task values, not the project's `value` column |
 | `getTaskById`, `getTaskByIdForUpdate` | Task fields only; the latter also locks its row |
 | `getTaskProjectBudget` | Joins a task to its owning project and retrieves the budget for execution rules |
-| `getTasksByName` | All exact task-name matches across projects, without embedded predecessor data |
 | `getProjectByName` | One project by its exact, unique name |
 | `getTaskProject` | Owning project ID for a task; the project-by-task handler then fetches the project record |
 | `getProjectBoardTasks` | Board fields ordered by position, optionally filtered by an `executed` boolean |

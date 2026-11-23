@@ -7,12 +7,18 @@ export interface User {
   email: string;
 }
 
+export interface ProjectGoals {
+  steps: number;
+  cost: number;
+}
+
 export interface Project {
   project_id: string;
   name: string;
   budget: number;
   value: number;
   description: string;
+  goals: ProjectGoals | null;
 }
 
 export interface Task {
@@ -41,7 +47,10 @@ export interface ProjectCompletion {
 }
 
 // POST /tasks/:id/execute returns only the updated money fields
-export type ExecutedTaskProject = Pick<Project, "project_id" | "budget" | "value">;
+export type ExecutedTaskProject = Pick<
+  Project,
+  "project_id" | "budget" | "value"
+>;
 
 export interface AuditLog {
   log_id: string;
@@ -63,6 +72,17 @@ export interface CreateProjectInput {
   name: string;
   description: string;
   budget: number;
+  goals?: ProjectGoals;
+}
+
+// At least one field must be present (enforced by the backend); goals: null clears them
+export type EditProjectInput = Partial<
+  Omit<CreateProjectInput, "goals"> & { goals: ProjectGoals | null }
+>;
+
+export interface EditProjectResponse {
+  message: string;
+  project: Project;
 }
 
 export interface CreateTaskInput {
@@ -79,7 +99,10 @@ export interface CreateTaskInput {
 
 // At least one field must be present (enforced by the backend)
 export type EditTaskInput = Partial<
-  Pick<CreateTaskInput, "task_name" | "description" | "cost" | "value" | "steps" | "predecessor_ids">
+  Pick<
+    CreateTaskInput,
+    "task_name" | "description" | "cost" | "value" | "steps" | "predecessor_ids"
+  >
 >;
 
 export interface EditTaskResponse {

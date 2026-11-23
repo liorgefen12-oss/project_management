@@ -1,11 +1,13 @@
 import { useProjectCompletion } from "../API/projects/useProjectCompletion";
 import type { Project } from "../API/types";
+import { getProjectGoals } from "../functions/projectGoals";
 
 type ProjectDescriptionProps = {
   project: Project;
   steps: number;
   taskCount: number;
   executedCount: number;
+  onEdit: () => void;
 };
 
 export default function ProjectDescription({
@@ -13,9 +15,11 @@ export default function ProjectDescription({
   steps,
   taskCount,
   executedCount,
+  onEdit,
 }: ProjectDescriptionProps) {
   const completion = useProjectCompletion(project.project_id);
   const completed = completion.data?.completed ?? false;
+  const goals = getProjectGoals(project.goals);
 
   return (
     <section className="panel" aria-label="Project description">
@@ -28,8 +32,21 @@ export default function ProjectDescription({
             {completed ? "Completed" : "In progress"}
           </span>
         )}
+        <button
+          type="button"
+          className="btn btn--secondary project-summary__edit"
+          onClick={onEdit}
+        >
+          Edit project
+        </button>
       </div>
       <p className="project-summary__description">{project.description}</p>
+      {goals && (
+        <p className="project-summary__goals">
+          Project goals - complete with a cost under {goals.cost} $ and under{" "}
+          {goals.steps} steps.
+        </p>
+      )}
 
       <dl className="project-summary__stats">
         <div className="project-summary__stat">

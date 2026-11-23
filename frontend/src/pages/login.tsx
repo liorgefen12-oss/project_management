@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from "react";
-import { errorMessage } from "../API/apiFetch";
+import { errorMessage } from "../API/apiErrorClass";
 import { useLogin } from "../API/users/useLogin";
 import "../styles/input.css";
 

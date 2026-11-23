@@ -1,4 +1,5 @@
 import type { Project } from "../API/types";
+import icon from "../../../assets/pictures/icon-no-background.png";
 import ProjectDropdown from "./projectDropdown";
 import UserInfo from "./userInfo";
 import "../styles/ProjectHeader.css";
@@ -20,9 +21,11 @@ export default function ProjectHeader({
 }: ProjectHeaderProps) {
   return (
     <header className="project-header">
-      <h1 className="project-header__title">Project board</h1>
+      <h1 className="project-header__title">
+        Library Projects Management
+        <img className="project-header__icon" src={icon} alt="" />
+      </h1>
       <div className="project-header__switch">
-        גר
         <ProjectDropdown
           projects={projects}
           value={projectId}

@@ -12,7 +12,7 @@ export function useMoveTask(projectId: string) {
         body: JSON.stringify({ position }),
       }),
     onSuccess: ({ tasks }) => {
-      // The response is the full, re-ordered board
+      //save in cache
       client.setQueryData(queryKeys.projects.tasks(projectId), tasks);
       client.invalidateQueries({
         queryKey: queryKeys.projects.allTasks(projectId),

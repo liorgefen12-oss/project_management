@@ -9,8 +9,8 @@ export function useProjectByName(name: string) {
     queryKey: queryKeys.projects.byName(trimmed),
     queryFn: () =>
       apiFetch<Project>(
-        `/projects/by-name?${new URLSearchParams({ name: trimmed })}`,
-      ),
+        `/projects/by-name?name=${encodeURIComponent(trimmed)}`,
+      ), //encode the project name to string safe for search
     enabled: trimmed.length > 0,
   });
 }

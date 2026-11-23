@@ -36,6 +36,17 @@
   margin: var(--space-2) 0 var(--space-4);
   color: var(--color-text-muted);
 }
+/* pushes the edit button to the right end of the heading row */
+.project-summary__edit {
+  margin-left: auto;
+}
+/* sits right under the description, so pull it up into the description's bottom margin */
+.project-summary__goals {
+  margin: calc(-1 * var(--space-2)) 0 var(--space-4);
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  color: var(--color-primary);
+}
 .project-summary__stats {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
@@ -91,7 +102,7 @@
 .tasks-board__cell {
   display: flex;
   justify-content: center;
-  height: var(--card-height);
+  min-height: var(--card-height);
   padding: var(--space-5) var(--space-2);
   border-radius: var(--radius-md);
 }

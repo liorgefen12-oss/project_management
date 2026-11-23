@@ -1,5 +1,5 @@
 import type { Kysely } from "kysely";
-import type { Database, NewProject } from "../types.js";
+import type { Database, NewProject, ProjectUpdate } from "../types.js";
 
 type Db = Kysely<Database>;
 
@@ -9,6 +9,7 @@ const projectColumns = [
   "budget",
   "value",
   "description",
+  "goals",
 ] as const;
 
 export function getAllProjects(db: Db) {
@@ -39,6 +40,28 @@ export function insertProject(db: Db, project: NewProject) {
   return db
     .insertInto("public.projects")
     .values(project)
+    .returning(projectColumns)
+    .executeTakeFirstOrThrow();
+}
+
+export function getProjectByIdForUpdate(db: Db, projectId: string) {
+  return db
+    .selectFrom("public.projects")
+    .select(projectColumns)
+    .where("project_id", "=", projectId)
+    .forUpdate()
+    .executeTakeFirst();
+}
+
+export function updateProject(
+  db: Db,
+  projectId: string,
+  changes: Pick<ProjectUpdate, "name" | "description" | "budget" | "goals">,
+) {
+  return db
+    .updateTable("public.projects")
+    .set(changes)
+    .where("project_id", "=", projectId)
     .returning(projectColumns)
     .executeTakeFirstOrThrow();
 }

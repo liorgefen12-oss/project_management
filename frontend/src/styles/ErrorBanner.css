@@ -1,0 +1,49 @@
+.error-banner {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin: var(--space-4) var(--space-6);
+  padding: var(--space-4) var(--space-5);
+  border: 2px solid var(--color-danger);
+  border-left-width: 8px;
+  border-radius: var(--radius-lg);
+  background: linear-gradient(135deg, var(--color-danger-soft), #ffd6dd);
+  color: #b0102e;
+  font-size: var(--font-size-md);
+  font-weight: 800;
+  letter-spacing: 0.2px;
+  box-shadow: 0 6px 20px rgba(212, 64, 90, 0.35);
+  animation:
+    error-banner-shake 0.5s ease-in-out,
+    error-banner-glow 2s ease-in-out 0.5s infinite;
+}
+
+.error-banner::before {
+  content: "🚨";
+  font-size: var(--font-size-xl);
+  line-height: 1;
+}
+
+.error-banner::after {
+  content: "⛔";
+  margin-left: auto;
+  font-size: var(--font-size-lg);
+  line-height: 1;
+}
+
+@keyframes error-banner-shake {
+  0%, 100% { transform: translateX(0); }
+  20%, 60% { transform: translateX(-6px); }
+  40%, 80% { transform: translateX(6px); }
+}
+
+@keyframes error-banner-glow {
+  0%, 100% { box-shadow: 0 6px 20px rgba(212, 64, 90, 0.35); }
+  50% { box-shadow: 0 6px 28px rgba(212, 64, 90, 0.7); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .error-banner {
+    animation: none;
+  }
+}

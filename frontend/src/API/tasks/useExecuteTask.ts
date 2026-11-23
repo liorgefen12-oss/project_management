@@ -10,14 +10,12 @@ export function useExecuteTask(projectId: string) {
       apiFetch<ExecutedTaskProject>(`/tasks/${taskId}/execute`, {
         method: "POST",
       }),
-    // Invalidate on error too: a rejected attempt is still written to the audit log
     onSettled: () => {
-      // Budget, value, board, and completion of this project
+      // update all related cache
       client.invalidateQueries({
         queryKey: queryKeys.projects.detail(projectId),
       });
       client.invalidateQueries({ queryKey: queryKeys.projects.list() });
-      // Executing a task can unlock its successors
       client.invalidateQueries({ queryKey: queryKeys.tasks.all });
       client.invalidateQueries({ queryKey: queryKeys.auditLogs.all });
     },

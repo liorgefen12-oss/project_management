@@ -6,6 +6,7 @@ import {
 } from "../../database/queries/tasks.js";
 import {
   insertProject,
+  updateProject,
 } from "../../database/queries/projects.js";
 import { useQueryDatabase, projectId, secondId, thirdId } from "./databaseFixture.js";
 
@@ -27,6 +28,19 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)("PostgreSQL queries: insertProje
       budget: 10,
     });
     expect(defaultValueProject.value).toBe(0);
+    expect(defaultValueProject.goals).toBeNull();
+    const goalsProject = await insertProject(database, {
+      name: "Goals project",
+      description: "",
+      budget: 10,
+      goals: { steps: 12, cost: 800 },
+    });
+    expect(goalsProject.goals).toEqual({ steps: 12, cost: 800 });
+    const editedProject = await updateProject(database, goalsProject.project_id, {
+      budget: 20,
+      goals: null,
+    });
+    expect(editedProject).toMatchObject({ name: "Goals project", budget: 20, goals: null });
     await expect(
       insertProject(database, {
         name: "New project",

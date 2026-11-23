@@ -1,6 +1,7 @@
 ﻿import Router from "@koa/router";
 
 import { createProject } from "../controllers/projects/createProject.js";
+import { editProject } from "../controllers/projects/editProject.js";
 import { getProject } from "../controllers/projects/getProject.js";
 import { getProjectByItsName } from "../controllers/projects/getProjectByItsName.js";
 import { getProjectByTask } from "../controllers/projects/getProjectByTask.js";
@@ -16,6 +17,7 @@ import {
   idRequestSchema,
   projectNameRequestSchema,
   projectTasksRequestSchema,
+  updateProjectRequestSchema,
 } from "../zod/schemas.js";
 
 export const projectsRouter = new Router({ prefix: "/projects" });
@@ -33,6 +35,9 @@ projectsRouter.get("/by-name", validate(projectNameRequestSchema), getProjectByI
 projectsRouter.get("/by-task/:id", validate(idRequestSchema), getProjectByTask);
 projectsRouter.get("/:id", validate(idRequestSchema), getProject);
 projectsRouter.get("/:id/completed", validate(idRequestSchema), getProjectCompletion);
+
+// Edit name, description, budget and/or goals (value only changes by executing tasks)
+projectsRouter.patch("/:id", validate(updateProjectRequestSchema), editProject);
 
 // All tasks of a project, in board order
 projectsRouter.get("/:id/tasks", validate(projectTasksRequestSchema), listProjectTasks);

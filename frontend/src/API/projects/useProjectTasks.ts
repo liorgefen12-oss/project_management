@@ -11,8 +11,13 @@ export function useProjectTasks(
   return useQuery({
     queryKey: queryKeys.projects.tasks(projectId ?? "", executed),
     queryFn: () => {
-      const query = executed === undefined ? "" : `?executed=${executed}`;
-      return apiFetch<BoardTask[]>(`/projects/${projectId}/tasks${query}`);
+      let executedFilter = "";
+      if (executed)
+        //if execution filter is used and not empty, filter the tasks
+        executedFilter = `?executed=${executed}`;
+      return apiFetch<BoardTask[]>(
+        `/projects/${projectId}/tasks${executedFilter}`,
+      );
     },
     enabled: !!projectId,
   });

@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from "react";
-import { errorMessage } from "../API/apiFetch";
+import { errorMessage } from "../API/apiErrorClass";
 import { useCreateTask } from "../API/tasks/useCreateTask";
 import { useEditTask } from "../API/tasks/useEditTask";
 import { useTask } from "../API/tasks/useTask";
@@ -47,7 +47,8 @@ function TaskFieldsForm({
   onClose,
 }: FieldsFormProps) {
   const [fields, setFields] = useState(initial);
-  const [changePredecessors, setChangePredecessors] = useState(!predecessorsOptional);
+  const [changePredecessors, setChangePredecessors] =
+    useState(!predecessorsOptional);
   const [predecessorIds, setPredecessorIds] = useState<string[]>([]);
 
   function update<K extends keyof TaskFields>(key: K, value: TaskFields[K]) {
@@ -56,7 +57,9 @@ function TaskFieldsForm({
 
   function togglePredecessor(taskId: string) {
     setPredecessorIds((ids) =>
-      ids.includes(taskId) ? ids.filter((id) => id !== taskId) : [...ids, taskId],
+      ids.includes(taskId)
+        ? ids.filter((id) => id !== taskId)
+        : [...ids, taskId],
     );
   }
 
@@ -65,7 +68,11 @@ function TaskFieldsForm({
     onSubmit(fields, changePredecessors ? predecessorIds : undefined);
   }
 
-  const numberField = (key: "cost" | "value" | "steps", label: string, min: number) => (
+  const numberField = (
+    key: "cost" | "value" | "steps",
+    label: string,
+    min: number,
+  ) => (
     <label className="field">
       <span className="field__label">{label}</span>
       <input
@@ -86,10 +93,19 @@ function TaskFieldsForm({
       onClose={onClose}
       actions={
         <>
-          <button type="button" className="btn btn--secondary" onClick={onClose}>
+          <button
+            type="button"
+            className="btn btn--secondary"
+            onClick={onClose}
+          >
             Cancel
           </button>
-          <button type="submit" form="task-form" className="btn" disabled={pending}>
+          <button
+            type="submit"
+            form="task-form"
+            className="btn"
+            disabled={pending}
+          >
             {pending ? "Saving…" : "Save"}
           </button>
         </>
@@ -168,9 +184,14 @@ type CreateTaskFormProps = {
   onClose: () => void;
 };
 
-export function CreateTaskForm({ projectId, tasks, onClose }: CreateTaskFormProps) {
+export function CreateTaskForm({
+  projectId,
+  tasks,
+  onClose,
+}: CreateTaskFormProps) {
   const create = useCreateTask();
-  const position = tasks.reduce((max, task) => Math.max(max, task.position), 0) + 1;
+  const position =
+    tasks.reduce((max, task) => Math.max(max, task.position), 0) + 1;
 
   return (
     <TaskFieldsForm
@@ -242,7 +263,8 @@ export function EditTaskForm({ taskId, tasks, onClose }: EditTaskFormProps) {
       onSubmit={(fields, predecessorIds) => {
         const changes: EditTaskInput = {};
         for (const key of Object.keys(fields) as (keyof TaskFields)[]) {
-          if (fields[key] !== initial[key]) Object.assign(changes, { [key]: fields[key] });
+          if (fields[key] !== initial[key])
+            Object.assign(changes, { [key]: fields[key] });
         }
         if (predecessorIds) changes.predecessor_ids = predecessorIds;
         if (Object.keys(changes).length === 0) return onClose();

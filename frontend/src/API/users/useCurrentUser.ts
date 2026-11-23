@@ -10,6 +10,7 @@ export function useCurrentUser() {
     queryKey: queryKeys.users.me, //saved in query map under users/me
     queryFn: async () => {
       const user = await apiFetch<User>("/users/me");
+      //getState and not react useXxx ebcause it doesnt have to immediatly update/subscribe
       useGlobalStore.getState().setUser(user);
       return user;
     },

@@ -34,9 +34,9 @@ export default function ProjectDropdown({
         <option value="" disabled>
           Choose a project
         </option>
-        {projects.map((project) => (
-          <option key={project.project_id} value={project.project_id}>
-            {project.name}
+        {projects.map((p) => (
+          <option key={p.project_id} value={p.project_id}>
+            {p.name}
           </option>
         ))}
       </select>

@@ -1,10 +1,12 @@
 import { useState, type FormEvent } from "react";
-import { ApiError, errorMessage } from "../API/apiFetch";
+import { ApiError, errorMessage } from "../API/apiErrorClass";
 import { useCreateProject } from "../API/projects/useCreateProject";
 import { useProjectByName } from "../API/projects/useProjectByName";
 import type { Project } from "../API/types";
 import ProjectDropdown from "../components/projectDropdown";
+import ProjectGoalsFields from "../components/projectGoalsFields";
 import UserInfo from "../components/userInfo";
+import { goalsFromInputs } from "../functions/projectGoals";
 import "../styles/input.css";
 import "../styles/ProjectHeader.css";
 
@@ -80,11 +82,14 @@ function CreateProject({ onEnter, busy }: Pick<SignIntoProjectProps, "onEnter" |
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [budget, setBudget] = useState(0);
+  const [costGoal, setCostGoal] = useState("");
+  const [stepsGoal, setStepsGoal] = useState("");
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    const goals = goalsFromInputs(costGoal, stepsGoal) ?? undefined;
     create.mutate(
-      { name, description, budget },
+      { name, description, budget, goals },
       { onSuccess: (project) => onEnter(project.project_id) },
     );
   }
@@ -112,6 +117,12 @@ function CreateProject({ onEnter, busy }: Pick<SignIntoProjectProps, "onEnter" |
             onChange={(e) => setDescription(e.target.value)}
           />
         </label>
+        <ProjectGoalsFields
+          costGoal={costGoal}
+          stepsGoal={stepsGoal}
+          onCostGoalChange={setCostGoal}
+          onStepsGoalChange={setStepsGoal}
+        />
         <label className="field">
           <span className="field__label">Budget</span>
           <input

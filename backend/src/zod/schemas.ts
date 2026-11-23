@@ -29,10 +29,6 @@ export const auditLogsRequestSchema = z.object({
   }),
 });
 
-export const taskNameRequestSchema = z.object({
-  query: z.object({ name: z.string().trim().min(1) }),
-});
-
 export const projectTasksRequestSchema = z.object({
   params: idParamSchema,
   query: z.object({
@@ -46,10 +42,16 @@ export const moveTaskSchema = z.object({
   position: z.number().int().positive(),
 }).strict();
 
+export const projectGoalsSchema = z.object({
+  steps: z.number().int().nonnegative(),
+  cost: z.number().int().nonnegative(),
+}).strict();
+
 export const createProjectSchema = z.object({
   name: z.string().trim().min(1).max(50),
   description: z.string().max(250),
   budget: z.number().int().nonnegative(),
+  goals: projectGoalsSchema.optional(),
 });
 
 export const createTaskSchema = z.object({
@@ -69,6 +71,18 @@ export const createTaskSchema = z.object({
 
 export const createProjectRequestSchema = z.object({
   body: createProjectSchema,
+});
+
+// For edits, every field is optional (goals: null clears them), but at least one must be present
+export const updateProjectSchema = createProjectSchema
+  .extend({ goals: projectGoalsSchema.nullable() })
+  .partial()
+  .strict()
+  .refine((d) => Object.values(d).some((value) => value !== undefined), messages[400].nothingToUpdate);
+
+export const updateProjectRequestSchema = z.object({
+  params: idParamSchema,
+  body: updateProjectSchema,
 });
 export const createTaskRequestSchema = z.object({ body: createTaskSchema });
 

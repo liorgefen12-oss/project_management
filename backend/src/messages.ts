@@ -2,6 +2,7 @@ export const messages = {
   200: {
     taskUpdatedSuccessfully: "Task updated successfully",
     taskMovedSuccessfully: "Task moved successfully",
+    projectUpdatedSuccessfully: "Project updated successfully",
   },
   400: {
     malformedJson: "Request body contains invalid JSON, please check for typos",

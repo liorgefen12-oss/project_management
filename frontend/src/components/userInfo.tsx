@@ -10,7 +10,10 @@ export default function UserInfo({
   onLogout,
   disabled = false,
 }: UserInfoProps) {
-  const user = useGlobalStore((s) => s.user);
+  const user = useGlobalStore(
+    //hook
+    (s) => s.user, //selector
+  );
   if (!user) return null;
 
   return (

@@ -20,9 +20,9 @@ export function useEditTask() {
     onSuccess: ({ task }) => {
       client.setQueryData(queryKeys.tasks.detail(task.task_id), task);
       // Predecessor changes can affect executability of other tasks too
-      client.invalidateQueries({ queryKey: queryKeys.tasks.all });
+      client.invalidateQueries({ queryKey: queryKeys.tasks.all }); //update all tasks
       client.invalidateQueries({
-        queryKey: queryKeys.projects.allTasks(task.project),
+        queryKey: queryKeys.projects.allTasks(task.project), //update all tasks of project
       });
     },
   });

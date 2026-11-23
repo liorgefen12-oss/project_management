@@ -13,7 +13,6 @@ export { getTaskDirectPredecessors } from "./tasks/getTaskDirectPredecessors.js"
 export { getTaskExecutionStatus } from "./tasks/getTaskExecutionStatus.js";
 export { getTaskProject } from "./tasks/getTaskProject.js";
 export { getTaskProjectBudget } from "./tasks/getTaskProjectBudget.js";
-export { getTasksByName } from "./tasks/getTasksByName.js";
 export { getTasksByProjectId } from "./tasks/getTasksByProjectId.js";
 export { getTasksByProjectIdAndStatus } from "./tasks/getTasksByProjectIdAndStatus.js";
 export { getTasksByProjectName } from "./tasks/getTasksByProjectName.js";

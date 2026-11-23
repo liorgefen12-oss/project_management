@@ -8,12 +8,15 @@ export interface UsersTable {
   email: string;
 }
 
+export type ProjectGoals = { steps: number; cost: number };
+
 export interface ProjectsTable {
   project_id: Generated<string>;
   budget: number;
   value: Generated<number>;
   description: string;
   name: string;
+  goals: ColumnType<ProjectGoals | null, ProjectGoals | null | undefined, ProjectGoals | null>;
 }
 
 export interface TasksTable {
@@ -62,3 +65,4 @@ export type NewTask = Insertable<TasksTable>;
 export type TaskUpdate = Updateable<TasksTable>;
 export type Project = Selectable<ProjectsTable>;
 export type NewProject = Insertable<ProjectsTable>;
+export type ProjectUpdate = Updateable<ProjectsTable>;

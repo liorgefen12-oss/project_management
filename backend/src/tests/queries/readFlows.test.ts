@@ -62,21 +62,6 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)("PostgreSQL read flows", () => {
     expect((await client().get(`/tasks/${thirdId}/executable`)).text).toBe("false");
   });
 
-  it("returns all exact task-name matches, including names shared across projects", async () => {
-    await getDatabase().updateTable("public.tasks")
-      .set({ task_name: "Shared name" })
-      .where("task_id", "in", [firstId, otherId])
-      .execute();
-    const response = await client().get("/tasks/by-name").query({ name: " Shared name " });
-    expect(response.status).toBe(200);
-    expect(response.body.map((task: { task_id: string }) => task.task_id))
-      .toEqual([firstId, otherId]);
-    expect((await client().get("/tasks/by-name").query({ name: "Shared" })).body)
-      .toEqual([]);
-    expect((await client().get("/tasks/by-name").query({ name: "' OR true --" })).body)
-      .toEqual([]);
-  });
-
   it("retrieves a project by its unique name, including budget and value", async () => {
     const response = await client().get("/projects/by-name").query({ name: " Main project " });
     expect(response.status).toBe(200);

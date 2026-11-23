@@ -1,8 +1,8 @@
 .task-card {
   width: var(--card-width);
   max-width: 100%;
-  min-height: 0;
-  height: calc(
+  /* grows past the default size when content (e.g. a long predecessor list) needs it */
+  min-height: calc(
     var(--card-height) - 40px
   ); /* cell height includes 40px of padding */
   background: var(--color-surface);
@@ -11,12 +11,24 @@
   display: flex;
   flex-direction: column;
   cursor: grab;
+  position: relative;
 }
 .task-card--disabled {
   opacity: 0.6;
 }
 .task-card--executed {
   background: #eef6f5;
+}
+/* big V mark over executed cards; multiply hides the JPG's white background */
+.task-card--executed::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: url("../../../assets/pictures/v-mark.jpg") center / 140% no-repeat;
+  mix-blend-mode: multiply;
+  opacity: 0.85;
+  pointer-events: none;
+  border-radius: inherit;
 }
 
 .task-card__top {
@@ -63,6 +75,8 @@
 .task-card__execute--done {
   background: var(--color-success-soft);
   color: var(--color-success);
+  font-weight: 700;
+  font-size: 120%;
   opacity: 1;
 }
 
@@ -86,14 +100,15 @@
 }
 .task-card__predecessors {
   display: block;
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
+  margin: 0;
+  padding-left: var(--space-4);
+  list-style: disc;
   font-size: var(--font-size-sm);
   font-weight: 500;
 }
 .task-card__predecessor--waiting {
-  color: var(--color-danger);
+  color: black;
+  font-size: 80%;
 }
 .task-card__predecessor--done {
   color: var(--color-success);

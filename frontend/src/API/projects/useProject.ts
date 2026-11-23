@@ -7,6 +7,6 @@ export function useProject(projectId: string | undefined) {
   return useQuery({
     queryKey: queryKeys.projects.detail(projectId ?? ""),
     queryFn: () => apiFetch<Project>(`/projects/${projectId}`),
-    enabled: !!projectId,
+    enabled: !!projectId, //run query only if projectId is true, not undefined or null
   });
 }

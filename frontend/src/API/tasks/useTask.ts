@@ -7,6 +7,6 @@ export function useTask(taskId: string | undefined) {
   return useQuery({
     queryKey: queryKeys.tasks.detail(taskId ?? ""),
     queryFn: () => apiFetch<Task>(`/tasks/${taskId}`),
-    enabled: !!taskId,
+    enabled: !!taskId, //do only if taskId isnt undefined
   });
 }

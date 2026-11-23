@@ -15,9 +15,11 @@ import { logAction } from "../database/queries/audit_logs.js";
 import {
   areAllProjectTasksExecuted,
   getProjectById,
+  getProjectByIdForUpdate,
   projectExists,
   spendBudgetOnTask,
   insertProject,
+  updateProject,
 } from "../database/queries/projects.js";
 import {
   getTaskByIdForUpdate,
@@ -47,7 +49,9 @@ vi.mock("../database/queries/projects.js", () => ({
   spendBudgetOnTask: vi.fn(),
   getAllProjects: vi.fn(),
   getProjectById: vi.fn(),
+  getProjectByIdForUpdate: vi.fn(),
   insertProject: vi.fn(),
+  updateProject: vi.fn(),
 }));
 vi.mock("../database/queries/tasks.js", () => ({
   getTaskByIdForUpdate: vi.fn(),
@@ -121,6 +125,7 @@ describe("controller audit actions", () => {
       ...updatedProject,
       name: "Project",
       description: "",
+      goals: null,
     });
     vi.mocked(spendBudgetOnTask).mockResolvedValue(updatedProject);
     vi.mocked(areAllProjectTasksExecuted).mockResolvedValue(false);
@@ -514,6 +519,7 @@ describe("controller audit actions", () => {
       description: "",
       budget: 10,
       value: 0,
+      goals: null,
     };
     vi.mocked(insertProject).mockResolvedValue(newProject);
     const response = await request(app.callback())
@@ -524,6 +530,82 @@ describe("controller audit actions", () => {
       expect.anything(),
       { name: "New project", description: "", budget: 10, value: 0 },
     );
+  });
+
+  it("passes project goals through to the insert and rejects malformed goals", async () => {
+    const goals = { steps: 12, cost: 800 };
+    vi.mocked(insertProject).mockResolvedValue({
+      project_id: projectId,
+      name: "Goal project",
+      description: "",
+      budget: 10,
+      value: 0,
+      goals,
+    });
+    const created = await request(app.callback())
+      .post("/projects/")
+      .send({ name: "Goal project", description: "", budget: 10, goals });
+    expect(created.status).toBe(201);
+    expect(insertProject).toHaveBeenCalledWith(
+      expect.anything(),
+      { name: "Goal project", description: "", budget: 10, goals, value: 0 },
+    );
+
+    const rejected = await request(app.callback())
+      .post("/projects/")
+      .send({ name: "Bad goals", description: "", budget: 10, goals: { steps: 3 } });
+    expect(rejected.status).toBe(400);
+  });
+
+  it("edits a project and logs a budget change only when the budget changes", async () => {
+    const current = {
+      project_id: projectId,
+      name: "Project",
+      description: "",
+      budget: 100,
+      value: 0,
+      goals: null,
+    };
+    vi.mocked(getProjectByIdForUpdate).mockResolvedValue(current);
+    vi.mocked(updateProject).mockImplementation(async (_db, _id, changes) => ({
+      ...current,
+      ...changes,
+    }) as typeof current);
+
+    const described = await request(app.callback())
+      .patch(`/projects/${projectId}`)
+      .send({ description: "New text", goals: null });
+    expect(described.status).toBe(200);
+    expect(updateProject).toHaveBeenCalledWith(expect.anything(), projectId, {
+      description: "New text",
+      goals: null,
+    });
+    expect(logAction).not.toHaveBeenCalled();
+
+    const budgeted = await request(app.callback())
+      .patch(`/projects/${projectId}`)
+      .send({ budget: 150 });
+    expect(budgeted.status).toBe(200);
+    expect(budgeted.body.project.budget).toBe(150);
+    expect(logAction).toHaveBeenCalledWith(expect.anything(), userId, "budget changed", {
+      projectId,
+    });
+
+    const empty = await request(app.callback()).patch(`/projects/${projectId}`).send({});
+    expect(empty.status).toBe(400);
+    const valueEdit = await request(app.callback())
+      .patch(`/projects/${projectId}`)
+      .send({ value: 5 });
+    expect(valueEdit.status).toBe(400);
+  });
+
+  it("returns 404 when editing a missing project", async () => {
+    vi.mocked(getProjectByIdForUpdate).mockResolvedValue(undefined);
+    const response = await request(app.callback())
+      .patch(`/projects/${projectId}`)
+      .send({ budget: 1 });
+    expect(response.status).toBe(404);
+    expect(updateProject).not.toHaveBeenCalled();
   });
 
   it("rejects creating a task before one of its predecessors", async () => {
@@ -687,7 +769,6 @@ describe("controller audit actions", () => {
 
   it.each([
     `/tasks/${taskId}`,
-    "/tasks/by-name?name=Task",
     "/projects/by-name?name=Project",
     `/projects/by-task/${taskId}`,
     `/projects/${projectId}/completed`,
@@ -702,8 +783,6 @@ describe("controller audit actions", () => {
 
   it.each([
     "/tasks/not-a-uuid",
-    "/tasks/by-name",
-    "/tasks/by-name?name=%20",
     "/projects/by-name",
     "/projects/by-name?name=%20",
     "/projects/by-task/not-a-uuid",

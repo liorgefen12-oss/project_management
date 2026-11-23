@@ -1,10 +1,11 @@
 ﻿import { useState } from "react";
-import { errorMessage } from "../API/apiFetch";
+import { errorMessage } from "../API/apiErrorClass";
 import { useProject } from "../API/projects/useProject";
 import { useProjectTasks } from "../API/projects/useProjectTasks";
 import { useExecuteTask } from "../API/tasks/useExecuteTask";
 import { useMoveTask } from "../API/tasks/useMoveTask";
-import type { Project } from "../API/types";
+import type { BoardTask, Project } from "../API/types";
+import EditProjectForm from "../components/editProjectForm";
 import Popup from "../components/popup";
 import ProjectDescription from "../components/projectDescription";
 import ProjectHeader from "../components/projectHeader";
@@ -22,10 +23,11 @@ type ProjectBoardPageProps = {
   busy: boolean;
 };
 
-// Which popup is open: create form, edit form, or an error message
+// Which form pop up is open: create-task , edit-task, edit-project, or an error message
 type Dialog =
   | { kind: "create" }
   | { kind: "edit"; taskId: string }
+  | { kind: "edit-project" }
   | { kind: "message"; title: string; message: string };
 
 export default function ProjectBoardPage({
@@ -108,7 +110,7 @@ export default function ProjectBoardPage({
 
   const tasks = allTasks.data;
 
-  // Tasks shown on the board, depending on the chosen filter
+  // Tasks shown on the board, depending on the filter
   const shownTasks = [];
   for (const task of tasks) {
     if (filter === "all") {
@@ -124,17 +126,16 @@ export default function ProjectBoardPage({
   let totalSteps = 0;
   let executedCount = 0;
   for (const task of tasks) {
-    totalSteps = totalSteps + task.steps;
     if (task.executed) {
       executedCount += 1;
+      totalSteps += task.steps;
     }
   }
 
-  // task id -> task name, so cards can show predecessor names
-  //map of task id + name
-  const taskNames = new Map<string, string>();
+  // task id -> task, so cards can show predecessor names and positions
+  const tasksById = new Map<string, BoardTask>();
   for (const task of tasks) {
-    taskNames.set(task.task_id, task.task_name);
+    tasksById.set(task.task_id, task);
   }
 
   // The id of the task being executed right now (if any), so its card shows a spinner
@@ -153,10 +154,11 @@ export default function ProjectBoardPage({
             steps={totalSteps}
             taskCount={tasks.length}
             executedCount={executedCount}
+            onEdit={() => setDialog({ kind: "edit-project" })}
           />
           <TasksBoard
             tasks={shownTasks}
-            taskNames={taskNames}
+            tasksById={tasksById}
             filter={filter}
             onFilterChange={setFilter}
             onExecute={handleExecute}
@@ -168,7 +170,6 @@ export default function ProjectBoardPage({
           />
         </div>
       </div>
-
       {dialog !== null && dialog.kind === "create" && (
         <CreateTaskForm
           projectId={projectId}
@@ -182,6 +183,9 @@ export default function ProjectBoardPage({
           tasks={tasks}
           onClose={closeDialog}
         />
+      )}
+      {dialog !== null && dialog.kind === "edit-project" && (
+        <EditProjectForm project={project.data} onClose={closeDialog} />
       )}
       {dialog !== null && dialog.kind === "message" && (
         <Popup title={dialog.title} onClose={closeDialog}>
