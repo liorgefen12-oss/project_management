@@ -21,7 +21,7 @@ declare module "koa" {
 
 export interface AppOptions {
   frontendOrigin: string;
-  isProduction: boolean;
+  secureCookies: boolean;
   sessionSecret: string;
   sessionStore: SessionStore;
 }
@@ -45,7 +45,7 @@ export function createApp(options: AppOptions) {
   app.use(
     createSessionMiddleware(app, {
       store: options.sessionStore,
-      isProduction: options.isProduction,
+      secureCookies: options.secureCookies,
     }),
   );
 

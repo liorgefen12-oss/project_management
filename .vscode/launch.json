@@ -11,6 +11,13 @@
             "url": "http://localhost:5173",
             "webRoot": "${workspaceFolder}/frontend",
             "preLaunchTask": "dev: all"
+        },
+        {
+            "type": "chrome",
+            "request": "launch",
+            "name": "Launch full app in Docker (production build)",
+            "url": "http://localhost:5173",
+            "preLaunchTask": "docker: all"
         }
     ]
 }

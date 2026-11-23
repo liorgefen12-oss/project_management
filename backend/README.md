@@ -26,12 +26,16 @@ Initialization scripts run only when the Compose volume is empty. Schema edits
 are picked up by the tests on their next run, but existing development databases
 need explicit schema updates. `docker compose down` preserves the volume;
 adding `-v` erases its development data, so do not use it to apply schema changes.
-When running the API in Docker, copy `.env.example` to `.env` in this directory
+When running the stack in Docker, copy `.env.example` to `.env` in this directory
 and set a private `SESSION_SECRET` of at least 32 characters. From the repository
-root, run `docker compose up --build -d --wait`; the API will be available at
-`http://localhost:3000`. Compose overrides `DATABASE_URL` for the container to
+root, run `docker compose up --build -d --wait`; this starts the database, the API
+at `http://localhost:3000`, and the frontend (built by Vite and served by nginx)
+at `http://localhost:5173`. Stop any local `npm run dev` frontend first, since it
+uses the same port. Compose overrides `DATABASE_URL` for the container to
 use `db:5432` on the Docker network. `FRONTEND_ORIGIN` in `.env` must match the
-origin serving the frontend.
+origin serving the frontend. Compose also sets `SESSION_COOKIE_SECURE=false`
+because the stack is served over plain HTTP; when unset, session cookies are
+`secure` only when `NODE_ENV=production`.
 
 To run the API on your machine instead, keep using `npm run dev` with
 `DATABASE_URL` pointing to `localhost:5434`.

@@ -141,7 +141,7 @@ describe("login", () => {
     };
     const app = createApp({
       frontendOrigin: "http://localhost:5173",
-      isProduction: false,
+      secureCookies: false,
       sessionSecret: "test-secret-with-more-than-thirty-two-characters",
       sessionStore,
     });
@@ -246,7 +246,7 @@ describe("login", () => {
     };
     const app = createApp({
       frontendOrigin: "http://localhost:5173",
-      isProduction: false,
+      secureCookies: false,
       sessionSecret: "test-secret-with-more-than-thirty-two-characters",
       sessionStore,
     });

@@ -16,7 +16,7 @@ const memoryStore: SessionStore = {
 
 const app = createApp({
   frontendOrigin: "http://localhost:5173",
-  isProduction: false,
+  secureCookies: false,
   sessionSecret: "test-secret-with-more-than-thirty-two-characters",
   sessionStore: memoryStore,
 });
@@ -47,7 +47,7 @@ describe("sessions", () => {
   it("persists session data in the configured store across requests", async () => {
     const sessionApp = createApp({
       frontendOrigin: "http://localhost:5173",
-      isProduction: false,
+      secureCookies: false,
       sessionSecret: "test-secret-with-more-than-thirty-two-characters",
       sessionStore: memoryStore,
     });

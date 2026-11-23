@@ -11,7 +11,8 @@ const database = createDatabase(pool);
 const sessionStore = new PgSessionStore(pool);
 const app = createApp({
   frontendOrigin: environment.FRONTEND_ORIGIN,
-  isProduction: environment.NODE_ENV === "production",
+  secureCookies:
+    environment.SESSION_COOKIE_SECURE ?? environment.NODE_ENV === "production",
   sessionSecret: environment.SESSION_SECRET,
   sessionStore,
 });

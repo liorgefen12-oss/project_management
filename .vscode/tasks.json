@@ -2,10 +2,18 @@
   "version": "2.0.0",
   "tasks": [
     {
+      "label": "docker: stop app containers",
+      "type": "shell",
+      "command": "docker compose stop backend frontend",
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": []
+    },
+    {
       "label": "db",
       "type": "shell",
       "command": "docker compose up -d db",
       "options": { "cwd": "${workspaceFolder}" },
+      "dependsOn": "docker: stop app containers",
       "problemMatcher": []
     },
     {
@@ -30,6 +38,7 @@
       "type": "shell",
       "command": "npm.cmd run dev",
       "options": { "cwd": "${workspaceFolder}/frontend" },
+      "dependsOn": "docker: stop app containers",
       "isBackground": true,
       "problemMatcher": {
         "owner": "vite",
@@ -44,6 +53,20 @@
     {
       "label": "dev: all",
       "dependsOn": ["backend", "frontend"],
+      "problemMatcher": []
+    },
+    {
+      "label": "docker: all",
+      "type": "shell",
+      "command": "docker compose up --build -d --wait",
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": []
+    },
+    {
+      "label": "docker: down",
+      "type": "shell",
+      "command": "docker compose down",
+      "options": { "cwd": "${workspaceFolder}" },
       "problemMatcher": []
     }
   ]

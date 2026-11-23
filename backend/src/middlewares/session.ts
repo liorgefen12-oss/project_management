@@ -4,7 +4,7 @@ import type { SessionStore } from "../sessionStore.js";
 
 interface SessionMiddlewareOptions {
   store: SessionStore;
-  isProduction: boolean;
+  secureCookies: boolean;
 }
 
 export function createSessionMiddleware(
@@ -19,7 +19,7 @@ export function createSessionMiddleware(
       renew: false,
       httpOnly: true,
       sameSite: "lax",
-      secure: options.isProduction,
+      secure: options.secureCookies,
       maxAge: 8 * 60 * 60 * 1000,
     },
     app,
