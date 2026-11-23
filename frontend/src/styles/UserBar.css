@@ -1,0 +1,27 @@
+﻿.user-bar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+.user-bar__avatar {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--color-primary-soft);
+  color: var(--color-primary);
+  font-weight: 600;
+  text-transform: uppercase;
+}
+.user-bar__details {
+  display: grid;
+  line-height: 1.25;
+}
+.user-bar__name {
+  font-weight: 600;
+}
+.user-bar__email {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+}

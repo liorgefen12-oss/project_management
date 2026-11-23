@@ -1,0 +1,45 @@
+services:
+  db:
+    image: postgres:17
+    environment:
+      POSTGRES_USER: app
+      POSTGRES_PASSWORD: app
+      POSTGRES_DB: fullstack_db
+    ports:
+      - "127.0.0.1:5434:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./db-init/01-create-test-db.sql:/docker-entrypoint-initdb.d/01-create-test-db.sql:ro
+      - ./backend/src/database/db-schemas.sql:/docker-entrypoint-initdb.d/02-db-schemas.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U app -d fullstack_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build:
+      context: ./backend
+    env_file:
+      - ./backend/.env
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      DATABASE_URL: postgresql://app:app@db:5432/fullstack_db
+    ports:
+      - "127.0.0.1:3000:3000"
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - -e
+        - "fetch('http://127.0.0.1:3000/health').then((r) => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  pgdata:

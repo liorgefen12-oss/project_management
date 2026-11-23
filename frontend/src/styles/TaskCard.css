@@ -1,0 +1,129 @@
+.task-card {
+  width: var(--card-width);
+  max-width: 100%;
+  min-height: 0;
+  height: calc(
+    var(--card-height) - 40px
+  ); /* cell height includes 40px of padding */
+  background: var(--color-surface);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-card);
+  display: flex;
+  flex-direction: column;
+  cursor: grab;
+}
+.task-card--disabled {
+  opacity: 0.6;
+}
+.task-card--executed {
+  background: #eef6f5;
+}
+
+.task-card__top {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-2) var(--space-4);
+}
+.task-card__badge {
+  padding: 2px 6px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-sm);
+  color: var(--color-primary);
+}
+.task-card__name {
+  flex: 1;
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+}
+.task-card__footer {
+  margin-top: auto;
+  padding: var(--space-2);
+  border-top: 1px solid var(--color-border);
+}
+.task-card__execute {
+  width: 100%;
+  padding: var(--space-1) var(--space-2);
+  border: none;
+  border-radius: var(--radius-sm);
+  background: var(--color-primary);
+  color: #fff;
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  cursor: pointer;
+}
+.task-card__execute:hover:not(:disabled) {
+  filter: brightness(1.1);
+}
+.task-card__execute:disabled {
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+.task-card__execute--done {
+  background: var(--color-success-soft);
+  color: var(--color-success);
+  opacity: 1;
+}
+
+.task-card__row {
+  padding: var(--space-1) var(--space-2);
+  border-top: 1px solid var(--color-border);
+}
+.task-card__row--split {
+  display: flex;
+  gap: var(--space-6);
+}
+.task-card__label {
+  display: block;
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+}
+.task-card__number {
+  display: block;
+  font-size: var(--font-size-md);
+  font-weight: 500;
+}
+.task-card__predecessors {
+  display: block;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+}
+.task-card__predecessor--waiting {
+  color: var(--color-danger);
+}
+.task-card__predecessor--done {
+  color: var(--color-success);
+}
+
+.task-card--dragging {
+  opacity: 0.4;
+}
+.task-card--executed {
+  cursor: default;
+}
+.task-card__edit {
+  padding: 0 var(--space-1);
+  border: none;
+  background: none;
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+}
+.task-card__edit:hover {
+  color: var(--color-primary);
+}
+
+/* dollar sign before the cost */
+.task-card--cost::after {
+  content: " $";
+}
+.task-card--value::after {
+  content: " ✩";
+}
+
+.task-card--steps::after {
+  content: " 🚶︎";
+}

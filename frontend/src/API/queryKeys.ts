@@ -1,4 +1,4 @@
-import type { AuditLogType } from "../types";
+import type { AuditLogType } from "./types";
 
 // Keys are hierarchical so invalidating a prefix (e.g. projects.detail(id))
 // also refreshes everything nested under it (its tasks, completion, ...).
@@ -11,16 +11,11 @@ export const queryKeys = {
   users: {
     me: ["users", "me"] as const,
   },
-  currentProject: {
-    project_name: (name: string) => ["projects", "by-name", name],
-    project_id: (id: string) => ["projects", "by-id", id],
-  },
   projects: {
     all: ["projects"] as const,
     list: () => ["projects", "list"] as const,
     detail: projectDetail,
     byName: (name: string) => ["projects", "by-name", name] as const,
-    byTask: (taskId: string) => ["projects", "by-task", taskId] as const,
     completion: (projectId: string) =>
       [...projectDetail(projectId), "completed"] as const,
     allTasks: projectAllTasks,
@@ -30,7 +25,6 @@ export const queryKeys = {
   tasks: {
     all: ["tasks"] as const,
     detail: taskDetail,
-    byName: (name: string) => ["tasks", "by-name", name] as const,
     predecessors: (taskId: string) =>
       [...taskDetail(taskId), "predecessors"] as const,
     executable: (taskId: string) =>

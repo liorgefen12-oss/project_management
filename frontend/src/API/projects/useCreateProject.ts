@@ -1,6 +1,6 @@
 import { apiFetch } from "../apiFetch";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { queryKeys } from "../query_keys/queryKeys";
+import { queryKeys } from "../queryKeys";
 import type { CreateProjectInput, Project } from "../types";
 
 export function useCreateProject() {

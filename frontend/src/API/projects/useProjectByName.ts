@@ -1,6 +1,6 @@
 import { apiFetch } from "../apiFetch";
 import { useQuery } from "@tanstack/react-query";
-import { queryKeys } from "../query_keys/queryKeys";
+import { queryKeys } from "../queryKeys";
 import type { Project } from "../types";
 
 export function useProjectByName(name: string) {
@@ -8,7 +8,9 @@ export function useProjectByName(name: string) {
   return useQuery({
     queryKey: queryKeys.projects.byName(trimmed),
     queryFn: () =>
-      apiFetch<Project>(`/projects/by-name?${new URLSearchParams({ name: trimmed })}`),
+      apiFetch<Project>(
+        `/projects/by-name?${new URLSearchParams({ name: trimmed })}`,
+      ),
     enabled: trimmed.length > 0,
   });
 }

@@ -2,6 +2,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { createRoot } from "react-dom/client";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import App from "./app";
+import "./styles/theme.css";
 //sets global query defaults:
 // data stays fresh for 30 seconds,
 // and data isn't refetched when the window regains focus.

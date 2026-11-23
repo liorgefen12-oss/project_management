@@ -145,6 +145,11 @@ The client should call the project sign-in/out endpoints when entering/leaving
 a board; ordinary GET requests do not create visit records. Each POST records
 one event, including repeated calls.
 
+The frontend opens a project from its selection page, and records sign-out and
+sign-in when switching projects. Logging out from a board records sign-out first.
+The selection is held in memory: a browser refresh returns to the selection page
+and does not record sign-out for the previous board.
+
 Successful login/logout record `user log in` / `user log out`. Task execution
 records `task completed`, plus `budget changed` / `value changed` when those
 amounts change, with both project and task IDs. A blocked predecessor or

@@ -1,6 +1,6 @@
 import { apiFetch } from "../apiFetch";
 import { useQuery } from "@tanstack/react-query";
-import { queryKeys } from "../query_keys/queryKeys";
+import { queryKeys } from "../queryKeys";
 import type { TaskPredecessor } from "../types";
 
 // All (direct and indirect) predecessors, nearest first

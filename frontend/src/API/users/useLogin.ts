@@ -1,7 +1,8 @@
 import { apiFetch } from "../apiFetch";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { queryKeys } from "../query_keys/queryKeys";
+import { queryKeys } from "../queryKeys";
 import type { LoginInput, User } from "../types";
+import { useGlobalStore } from "../../store/useGlobalStore";
 
 export function useLogin() {
   const client = useQueryClient();
@@ -13,6 +14,7 @@ export function useLogin() {
       }),
     onSuccess: (user) => {
       client.setQueryData(queryKeys.users.me, user);
+      useGlobalStore.getState().setUser(user);
     },
   });
 }

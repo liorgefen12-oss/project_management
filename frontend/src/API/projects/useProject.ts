@@ -1,6 +1,6 @@
 import { apiFetch } from "../apiFetch";
 import { useQuery } from "@tanstack/react-query";
-import { queryKeys } from "../query_keys/queryKeys";
+import { queryKeys } from "../queryKeys";
 import type { Project } from "../types";
 
 export function useProject(projectId: string | undefined) {

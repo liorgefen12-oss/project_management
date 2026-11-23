@@ -1,5 +1,6 @@
 import { useId } from "react";
 import type { Project } from "../API/types";
+import "../styles/input.css";
 
 type ProjectDropdownProps = {
   projects: Project[];
@@ -17,27 +18,18 @@ export default function ProjectDropdown({
   disabled = false,
 }: ProjectDropdownProps) {
   const id = useId();
-  const large = variant === "large";
 
   return (
-    <div style={{ display: "grid", gap: 8 }}>
-      <label htmlFor={id} style={{ fontWeight: 600 }}>
+    <div className="field">
+      <label htmlFor={id} className="field__label">
         Project
       </label>
       <select
         id={id}
+        className={`field__input field__input--${variant}`}
         value={value}
         onChange={(event) => onChange(event.target.value)}
         disabled={disabled}
-        style={{
-          width: large ? "100%" : "auto",
-          minWidth: large ? 0 : 180,
-          padding: large ? 16 : 8,
-          fontSize: large ? 20 : 14,
-          border: large ? "2px solid #5366db" : "1px solid #aaa",
-          borderRadius: 8,
-          backgroundColor: "white",
-        }}
       >
         <option value="" disabled>
           Choose a project

@@ -1,0 +1,120 @@
+﻿.board-page {
+  min-height: 100vh;
+}
+
+.board-layout {
+  padding: var(--space-6);
+}
+.board-main {
+  display: grid;
+  gap: var(--space-6);
+  min-width: 0;
+}
+
+.project-summary__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+}
+.project-summary__name {
+  font-size: var(--font-size-xl);
+}
+.project-summary__status {
+  padding: 2px 10px;
+  border-radius: 999px;
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  background: var(--color-primary-soft);
+  color: var(--color-primary);
+}
+.project-summary__status--done {
+  background: var(--color-success-soft);
+  color: var(--color-success);
+}
+.project-summary__description {
+  margin: var(--space-2) 0 var(--space-4);
+  color: var(--color-text-muted);
+}
+.project-summary__stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: var(--space-3);
+  margin: 0;
+}
+.project-summary__stat {
+  padding: var(--space-3);
+  border-radius: var(--radius-md);
+  background: var(--color-bg);
+}
+.project-summary__stat dt {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+}
+.project-summary__stat dd {
+  margin: 0;
+  font-size: var(--font-size-lg);
+  font-weight: 600;
+}
+
+.tasks-board__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-bottom: var(--space-3);
+}
+.tasks-board__filters {
+  display: flex;
+  gap: var(--space-1);
+}
+.tasks-board__filter {
+  padding: var(--space-1) var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  background: var(--color-surface);
+  font-size: var(--font-size-sm);
+}
+.tasks-board__filter--active {
+  border-color: var(--color-primary);
+  background: var(--color-primary-soft);
+  color: var(--color-primary);
+}
+.tasks-board__hint {
+  margin: 0 0 var(--space-2);
+  font-size: var(--font-size-sm);
+}
+.tasks-board__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(var(--card-width), 1fr));
+}
+.tasks-board__cell {
+  display: flex;
+  justify-content: center;
+  height: var(--card-height);
+  padding: var(--space-5) var(--space-2);
+  border-radius: var(--radius-md);
+}
+.tasks-board__cell--drop {
+  outline: 2px dashed var(--color-primary);
+  outline-offset: -6px;
+  background: var(--color-primary-soft);
+}
+
+.search-results {
+  display: grid;
+  gap: var(--space-2);
+  margin: var(--space-3) 0 0;
+  padding: 0;
+  list-style: none;
+}
+.search-results__item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-md);
+  background: var(--color-bg);
+  font-size: var(--font-size-sm);
+}
