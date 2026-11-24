@@ -1,8 +1,9 @@
-import type { Db } from "./shared.js";
+import type { Kysely } from "kysely";
+import type { Database } from "../../types.js";
 
 // Board view: every column except the owning project id
 export function getProjectBoardTasks(
-  db: Db,
+  db: Kysely<Database>,
   projectId: string,
   executed?: boolean,
 ) {

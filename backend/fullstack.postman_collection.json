@@ -394,25 +394,6 @@
           }
         },
         {
-          "name": "Get project by task",
-          "request": {
-            "method": "GET",
-            "url": "{{baseUrl}}/projects/by-task/{{taskId}}",
-            "description": "Returns the task's full owning project, including budget and value. The ID in this path is a task ID, not a project ID."
-          },
-          "event": [{
-            "listen": "test",
-            "script": {
-              "type": "text/javascript",
-              "exec": [
-                "pm.test('Task belongs to the created project', function () {",
-                "  pm.expect(pm.response.json().project_id).to.eql(pm.collectionVariables.get('projectId'));",
-                "});"
-              ]
-            }
-          }]
-        },
-        {
           "name": "Edit task",
           "request": {
             "method": "PATCH",

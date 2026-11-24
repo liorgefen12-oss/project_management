@@ -5,6 +5,7 @@ import { getProjectGoals } from "../functions/projectGoals";
 type ProjectDescriptionProps = {
   project: Project;
   steps: number;
+  spent: number;
   taskCount: number;
   executedCount: number;
   onEdit: () => void;
@@ -13,6 +14,7 @@ type ProjectDescriptionProps = {
 export default function ProjectDescription({
   project,
   steps,
+  spent,
   taskCount,
   executedCount,
   onEdit,
@@ -22,7 +24,10 @@ export default function ProjectDescription({
   const goals = getProjectGoals(project.goals);
 
   return (
-    <section className="panel" aria-label="Project description">
+    <section
+      className={completed ? "panel project-summary--done" : "panel"}
+      aria-label="Project description"
+    >
       <div className="project-summary__head">
         <h2 className="project-summary__name">{project.name}</h2>
         {completion.data && (
@@ -43,16 +48,21 @@ export default function ProjectDescription({
       <p className="project-summary__description">{project.description}</p>
       {goals && (
         <p className="project-summary__goals">
-          Project goals - complete with a cost under {goals.cost} $ and under{" "}
-          {goals.steps} steps.
+          Goal - complete the project in under {goals.steps} steps with under{" "}
+          {goals.cost}$ spent.
         </p>
       )}
 
       <dl className="project-summary__stats">
         <div className="project-summary__stat">
-          <dt>Budget</dt>
+          <dt>Spent</dt>
+          <dd>{spent} $</dd>
+        </div>
+        <div className="project-summary__stat">
+          <dt>Budget (remaining)</dt>
           <dd>{project.budget} $</dd>
         </div>
+
         <div className="project-summary__stat">
           <dt>Value</dt>
           <dd>{project.value} ✩</dd>

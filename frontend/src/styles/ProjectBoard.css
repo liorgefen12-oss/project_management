@@ -3,12 +3,59 @@
 }
 
 .board-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 300px;
+  align-items: start;
+  gap: var(--space-6);
   padding: var(--space-6);
+}
+/* stack the audit log under the board on narrow screens */
+@media (max-width: 900px) {
+  .board-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }
 .board-main {
   display: grid;
   gap: var(--space-6);
   min-width: 0;
+}
+
+.audit-logs__title {
+  margin-bottom: var(--space-3);
+  font-size: var(--font-size-lg);
+}
+.audit-logs__list {
+  display: grid;
+  gap: var(--space-2);
+  max-height: 70vh;
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+  list-style: none;
+}
+.audit-logs__item {
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-md);
+  background: var(--color-bg);
+  font-size: var(--font-size-sm);
+}
+.audit-logs__action {
+  font-weight: 600;
+}
+.audit-logs__action::first-letter {
+  text-transform: uppercase;
+}
+.audit-logs__task {
+  color: var(--color-primary);
+}
+.audit-logs__meta {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+}
+
+.panel.project-summary--done {
+  background: var(--color-success-soft);
 }
 
 .project-summary__head {

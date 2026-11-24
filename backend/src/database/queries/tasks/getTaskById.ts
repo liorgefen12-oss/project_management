@@ -1,5 +1,5 @@
-import { taskById, type Db } from "./shared.js";
+import { getTaskById, type Db } from "./shared.js";
 
-export function getTaskById(db: Db, taskId: string) {
-  return taskById(db, taskId).executeTakeFirst();
+export function GetTaskById(db: Db, taskId: string) {
+  return getTaskById(db, taskId).executeTakeFirst();
 }

@@ -5,8 +5,6 @@ import {
   getTaskAllPredecessors,
   getTaskById,
   getTaskProjectBudget,
-  getTaskProject,
-  getTasksByProjectIdAndStatus,
 } from "../database/queries/tasks.js";
 import { messages } from "../messages.js";
 
@@ -62,19 +60,4 @@ export async function canExecuteTask(
   const predecessors = await areTaskPredecessorsExecuted(db, task.task_id);
   if (!predecessors.executable) return predecessors;
   return isTaskWithinProjectBudget(db, task);
-}
-
-export async function isTaskProjectCompleted(
-  db: Kysely<Database>,
-  taskId: string,
-): Promise<boolean> {
-  const projectId = await getTaskProject(db, taskId);
-  if (!projectId) {
-    throw Object.assign(new Error(messages[404].taskNotFound), {
-      status: 404,
-      expose: true,
-    });
-  }
-  const unexecutedTasks = await getTasksByProjectIdAndStatus(db, projectId, false);
-  return unexecutedTasks.length === 0;
 }

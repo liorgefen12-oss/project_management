@@ -9,7 +9,7 @@ services:
       - "127.0.0.1:5434:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
-      - ./db-init/01-create-test-db.sql:/docker-entrypoint-initdb.d/01-create-test-db.sql:ro
+      - ./backend/01-create-test-db.sql:/docker-entrypoint-initdb.d/01-create-test-db.sql:ro
       - ./backend/src/database/db-schemas.sql:/docker-entrypoint-initdb.d/02-db-schemas.sql:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U app -d fullstack_db"]

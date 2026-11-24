@@ -1,8 +1,8 @@
-import { sql } from "kysely";
-import type { Db } from "./shared.js";
+import { sql, type Kysely } from "kysely";
+import type { Database } from "../../types.js";
 
 export async function updateTaskPosition(
-  db: Db,
+  db: Kysely<Database>,
   taskId: string,
   newPosition: number,
 ): Promise<void> {

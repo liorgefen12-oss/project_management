@@ -63,6 +63,13 @@ export interface AuditLog {
 
 export type AuditLogType = "user-logins" | "project-sign-ins-and-outs";
 
+// GET /audit-logs/projects/:id also returns the action name and who did it
+export interface ProjectAuditLog extends AuditLog {
+  action_name: string;
+  first_name: string;
+  last_name: string;
+}
+
 export interface LoginInput {
   email: string;
   password: string;

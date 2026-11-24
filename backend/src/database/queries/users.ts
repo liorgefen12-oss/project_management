@@ -12,15 +12,6 @@ export function getUserWithPasswordByEmail(db: Db, email: string) {
     .executeTakeFirst();
 }
 
-export async function userExists(db: Db, user_id: string) {
-  const user = await db
-    .selectFrom("public.users")
-    .select("user_id")
-    .where("user_id", "=", user_id)
-    .executeTakeFirst();
-  return user !== undefined;
-}
-
 export function getUserById(db: Db, userId: string) {
   return db
     .selectFrom("public.users")

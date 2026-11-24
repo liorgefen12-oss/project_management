@@ -1,8 +1,8 @@
-import type { Task, TaskUpdate } from "../../types.js";
-import { taskById, type Db } from "./shared.js";
+import type { Kysely } from "kysely";
+import type { Database, Task, TaskUpdate } from "../../types.js";
 
 export async function updateTask(
-  db: Db,
+  db: Kysely<Database>,
   taskId: string,
   changes: Pick<
     TaskUpdate,
@@ -39,5 +39,9 @@ export async function updateTask(
         .execute();
     }
   }
-  return taskById(db, taskId).executeTakeFirstOrThrow();
+  return db
+    .selectFrom("public.tasks as t")
+    .selectAll("t")
+    .where("task_id", "=", taskId)
+    .executeTakeFirstOrThrow();
 }

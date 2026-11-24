@@ -1,6 +1,7 @@
-import type { Db } from "./shared.js";
+import type { Kysely } from "kysely";
+import type { Database } from "../../types.js";
 
-export async function markExecuted(db: Db, taskId: string) {
+export async function markExecuted(db: Kysely<Database>, taskId: string) {
   await db
     .updateTable("public.tasks")
     .set({ executed: true })

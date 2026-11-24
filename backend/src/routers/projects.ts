@@ -4,7 +4,6 @@ import { createProject } from "../controllers/projects/createProject.js";
 import { editProject } from "../controllers/projects/editProject.js";
 import { getProject } from "../controllers/projects/getProject.js";
 import { getProjectByItsName } from "../controllers/projects/getProjectByItsName.js";
-import { getProjectByTask } from "../controllers/projects/getProjectByTask.js";
 import { getProjectCompletion } from "../controllers/projects/getProjectCompletion.js";
 import { listProjects } from "../controllers/projects/listProjects.js";
 import { listProjectTasks } from "../controllers/projects/listProjectTasks.js";
@@ -32,7 +31,6 @@ projectsRouter.post("/", validate(createProjectRequestSchema), createProject);
 
 // One project: the UI needs its current budget and value
 projectsRouter.get("/by-name", validate(projectNameRequestSchema), getProjectByItsName);
-projectsRouter.get("/by-task/:id", validate(idRequestSchema), getProjectByTask);
 projectsRouter.get("/:id", validate(idRequestSchema), getProject);
 projectsRouter.get("/:id/completed", validate(idRequestSchema), getProjectCompletion);
 

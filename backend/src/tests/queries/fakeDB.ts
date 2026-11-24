@@ -6,13 +6,23 @@ import type { Database } from "../../database/types.js";
 import { createDatabase } from "../../database/db.js";
 
 export const projectId = "00000000-0000-4000-8000-000000000001";
-export const emptyProjectId = "00000000-0000-4000-8000-000000000002";
-export const otherProjectId = "00000000-0000-4000-8000-000000000003";
-export const firstId = "00000000-0000-4000-8000-000000000011";
-export const secondId = "00000000-0000-4000-8000-000000000012";
-export const thirdId = "00000000-0000-4000-8000-000000000013";
-export const otherId = "00000000-0000-4000-8000-000000000014";
-export const missingId = "00000000-0000-4000-8000-000000000099";
+export const projectId_empty = "00000000-0000-4000-8000-000000000002";
+export const projectId_other = "00000000-0000-4000-8000-000000000003";
+export const taskId_1 = "00000000-0000-4000-8000-000000000011";
+export const taskId_2 = "00000000-0000-4000-8000-000000000012";
+export const taskId_3 = "00000000-0000-4000-8000-000000000013";
+export const taskId_other = "00000000-0000-4000-8000-000000000014";
+export const taskId_missing = "00000000-0000-4000-8000-000000000099";
+
+export function getDirectPredecessors(db: Kysely<Database>, taskId: string) {
+  return db
+    .selectFrom("public.task_predecessors as p")
+    .innerJoin("public.tasks as t", "t.task_id", "p.predecessor_id")
+    .select(["t.task_id", "t.executed"])
+    .where("p.task_id", "=", taskId)
+    .orderBy("t.task_id")
+    .execute();
+}
 
 export function useQueryDatabase() {
   const connectionString = process.env.TEST_DATABASE_URL;
@@ -57,15 +67,6 @@ export function useQueryDatabase() {
         await database.transaction().execute(async (transaction) => {
           await sql`
             DROP FUNCTION public.update_task_position(uuid, integer);
-            DROP FUNCTION public.get_task_predecessors(uuid);
-            DROP FUNCTION public.get_tasks_by_project_id(uuid);
-            DROP FUNCTION public.get_tasks_by_project_id_and_status(uuid, boolean);
-            DROP FUNCTION public.get_tasks_by_project_name(varchar);
-            DROP FUNCTION public.get_tasks_by_project_name_and_status(varchar, boolean);
-            DROP FUNCTION public.get_project_total_cost_by_id(uuid);
-            DROP FUNCTION public.get_project_total_cost_by_name(varchar);
-            DROP FUNCTION public.get_project_total_value_by_id(uuid);
-            DROP FUNCTION public.get_project_total_value_by_name(varchar);
             DROP TABLE audit.logs;
             DROP TABLE audit.task_actions;
             DROP TABLE public.task_predecessors;
@@ -98,7 +99,7 @@ export function useQueryDatabase() {
     await database
       .insertInto("public.projects")
       .values(
-        [projectId, emptyProjectId, otherProjectId].map((id, index) => ({
+        [projectId, projectId_empty, projectId_other].map((id, index) => ({
           project_id: id,
           name: ["Main project", "Empty project", "Other project"][index],
           budget: 100,
@@ -111,7 +112,7 @@ export function useQueryDatabase() {
       .insertInto("public.tasks")
       .values([
         {
-          task_id: firstId,
+          task_id: taskId_1,
           task_name: "First",
           description: "",
           project: projectId,
@@ -121,7 +122,7 @@ export function useQueryDatabase() {
           steps: 1,
         },
         {
-          task_id: secondId,
+          task_id: taskId_2,
           task_name: "Second",
           description: "",
           project: projectId,
@@ -132,7 +133,7 @@ export function useQueryDatabase() {
           executed: true,
         },
         {
-          task_id: thirdId,
+          task_id: taskId_3,
           task_name: "Third",
           description: "",
           project: projectId,
@@ -142,10 +143,10 @@ export function useQueryDatabase() {
           steps: 1,
         },
         {
-          task_id: otherId,
+          task_id: taskId_other,
           task_name: "Other",
           description: "",
-          project: otherProjectId,
+          project: projectId_other,
           position: 1,
           cost: 99,
           value: 99,
@@ -156,8 +157,8 @@ export function useQueryDatabase() {
     await database
       .insertInto("public.task_predecessors")
       .values([
-        { task_id: secondId, predecessor_id: firstId },
-        { task_id: thirdId, predecessor_id: secondId },
+        { task_id: taskId_2, predecessor_id: taskId_1 },
+        { task_id: taskId_3, predecessor_id: taskId_2 },
       ])
       .execute();
   });

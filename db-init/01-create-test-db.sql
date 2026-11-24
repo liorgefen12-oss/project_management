@@ -1,1 +1,0 @@
-CREATE DATABASE fullstack_kysely_test;

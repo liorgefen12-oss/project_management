@@ -1,8 +1,8 @@
-import type { NewTask, Task } from "../../types.js";
-import type { Db } from "./shared.js";
+import type { Kysely } from "kysely";
+import type { Database, NewTask, Task } from "../../types.js";
 
 export async function insertTask(
-  db: Db,
+  db: Kysely<Database>,
   task: NewTask,
   predecessorIds: readonly string[] = [],
 ): Promise<Task> {

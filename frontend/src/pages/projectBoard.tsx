@@ -5,6 +5,7 @@ import { useProjectTasks } from "../API/projects/useProjectTasks";
 import { useExecuteTask } from "../API/tasks/useExecuteTask";
 import { useMoveTask } from "../API/tasks/useMoveTask";
 import type { BoardTask, Project } from "../API/types";
+import AuditLogsPanel from "../components/auditLogsPanel";
 import EditProjectForm from "../components/editProjectForm";
 import Popup from "../components/popup";
 import ProjectDescription from "../components/projectDescription";
@@ -124,11 +125,13 @@ export default function ProjectBoardPage({
 
   // Totals for the project description
   let totalSteps = 0;
+  let spent = 0;
   let executedCount = 0;
   for (const task of tasks) {
     if (task.executed) {
       executedCount += 1;
       totalSteps += task.steps;
+      spent += task.cost;
     }
   }
 
@@ -152,6 +155,7 @@ export default function ProjectBoardPage({
           <ProjectDescription
             project={project.data}
             steps={totalSteps}
+            spent={spent}
             taskCount={tasks.length}
             executedCount={executedCount}
             onEdit={() => setDialog({ kind: "edit-project" })}
@@ -169,6 +173,7 @@ export default function ProjectBoardPage({
             moving={move.isPending}
           />
         </div>
+        <AuditLogsPanel projectId={projectId} tasksById={tasksById} />
       </div>
       {dialog !== null && dialog.kind === "create" && (
         <CreateTaskForm

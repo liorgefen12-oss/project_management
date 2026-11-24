@@ -49,6 +49,9 @@ export function getLogs(db: Db, type?: AuditLogType) {
 
 export function getLogsByProjectId(db: Db, projectId: string) {
   return logsByRecentFirst(db)
+    .innerJoin("audit.task_actions as a", "a.action_id", "l.action_id")
+    .innerJoin("public.users as u", "u.user_id", "l.user_id")
+    .select(["a.action_name", "u.first_name", "u.last_name"])
     .where("l.project_id", "=", projectId)
     .execute();
 }

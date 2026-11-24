@@ -22,6 +22,8 @@ export function useEditProject() {
       // The name shows up in the project dropdown and by-name lookups
       qc.invalidateQueries({ queryKey: queryKeys.projects.list() });
       qc.invalidateQueries({ queryKey: ["projects", "by-name"] });
+      // A budget change is written to the audit log
+      qc.invalidateQueries({ queryKey: queryKeys.auditLogs.all });
     },
   });
 }
