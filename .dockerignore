@@ -1,0 +1,9 @@
+# Applies to builds whose context is the repo root (the frontend image)
+**/node_modules
+**/dist
+**/coverage
+**/.env
+**/.env.*
+.git
+backend
+*.sql
