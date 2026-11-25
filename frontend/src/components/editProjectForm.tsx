@@ -18,6 +18,8 @@ export default function EditProjectForm({ project, onClose }: EditProjectFormPro
   const [name, setName] = useState(project.name);
   const [description, setDescription] = useState(project.description);
   const [budget, setBudget] = useState(project.budget);
+  // The budget when the form was opened; the backend rejects the edit if it changed since
+  const [initialBudget] = useState(project.budget);
   const [costGoal, setCostGoal] = useState(initialGoals ? String(initialGoals.cost) : "");
   const [stepsGoal, setStepsGoal] = useState(initialGoals ? String(initialGoals.steps) : "");
 
@@ -27,7 +29,10 @@ export default function EditProjectForm({ project, onClose }: EditProjectFormPro
     const changes: EditProjectInput = {};
     if (name !== project.name) changes.name = name;
     if (description !== project.description) changes.description = description;
-    if (budget !== project.budget) changes.budget = budget;
+    if (budget !== initialBudget) {
+      changes.budget = budget;
+      changes.expected_budget = initialBudget;
+    }
     const goals = goalsFromInputs(costGoal, stepsGoal);
     const goalsChanged =
       goals?.cost !== initialGoals?.cost || goals?.steps !== initialGoals?.steps;

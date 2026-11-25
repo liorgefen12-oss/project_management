@@ -1,4 +1,4 @@
-﻿import Router from "@koa/router";
+import Router from "@koa/router";
 
 import { createProject } from "../controllers/projects/createProject.js";
 import { editProject } from "../controllers/projects/editProject.js";
@@ -10,7 +10,7 @@ import { listProjectTasks } from "../controllers/projects/listProjectTasks.js";
 import {
   signInToProject,
   signOutOfProject,
-} from "../controllers/projects/signXxxProject.js";
+} from "../controllers/projects/projectVisits.js";
 import { requireAuthentication } from "../middlewares/authRequirer.js";
 import { validate } from "../middlewares/zodValidator.js";
 import {

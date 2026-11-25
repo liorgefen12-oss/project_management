@@ -17,6 +17,10 @@ export function useEditProject() {
         method: "PATCH",
         body: JSON.stringify(changes),
       }),
+    onError: (_error, { projectId }) => {
+      // e.g. 409 "budget changed meanwhile": show the current values next time the form opens
+      qc.invalidateQueries({ queryKey: queryKeys.projects.detail(projectId) });
+    },
     onSuccess: ({ project }) => {
       qc.setQueryData(queryKeys.projects.detail(project.project_id), project);
       // The name shows up in the project dropdown

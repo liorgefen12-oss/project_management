@@ -57,6 +57,11 @@ password, and ensure `audit.task_actions` contains these action names:
 
 Existing databases keep their data; no automatic seeding is performed.
 
+`src/database/db-schemas.sql` is the source of truth for the database structure. Docker
+runs it only when it creates a new database volume, so schema changes to an existing
+database must be applied manually (e.g. in pgAdmin). The integration tests also build
+their tables from this file.
+
 ## Environment variables
 
 - `PORT` — The port the API listens on (defaults to `3000`).
@@ -64,6 +69,8 @@ Existing databases keep their data; no automatic seeding is performed.
 - `TEST_DATABASE_URL` — Connection URL for `fullstack_kysely_test`, used only by tests.
 - `SESSION_SECRET` — Private key used to sign session cookies.
 - `FRONTEND_ORIGIN` — The frontend address allowed to make API requests.
+- `SESSION_COOKIE_SECURE` — `true`/`false`; defaults to secure cookies only in production.
+- `TRUST_PROXY` — `true` when running behind a reverse proxy that sets `X-Forwarded-*` headers (Docker's nginx); defaults to `false`.
 
 ## Scripts
 
@@ -88,7 +95,7 @@ All endpoints except `/health` and `/users/login` require logging in first.
 - `GET /projects` — List projects.
 - `POST /projects` — Create a project.
 - `GET /projects/:id` — Get a project's details.
-- `PATCH /projects/:id` — Update a project.
+- `PATCH /projects/:id` — Update a project. When changing `budget`, send `expected_budget` (the budget the client last saw) to get a 409 instead of overwriting a concurrent spend.
 - `GET /projects/by-name?name=...` — Find a project by name.
 - `GET /projects/:id/completed` — Check whether all tasks in a project are complete.
 - `GET /projects/:id/tasks` — List a project's tasks; optionally filter with `?executed=true` or `?executed=false`.
@@ -97,7 +104,7 @@ All endpoints except `/health` and `/users/login` require logging in first.
 
 ### Tasks
 
-- `POST /tasks` — Create a task.
+- `POST /tasks` — Create a task. The server appends it to the end of the board (`position` is not accepted).
 - `GET /tasks/:id` — Get a task's details.
 - `PATCH /tasks/:id` — Update a task.
 - `PATCH /tasks/:id/position` — Move a task to a different position.
@@ -132,8 +139,9 @@ recalculate `goals_met`; use the app for subsequent edits.
 
 - A task can be executed only if all its predecessors are executed and the project's budget covers its cost.
 - Executing a task subtracts its cost from the project budget and adds its value to the project value.
-- Executed tasks cannot be edited.
+- Executed tasks are read-only: they cannot be edited or moved. Other tasks may still be moved across them, which shifts their position.
 - A task cannot be positioned on the board before its predecessors.
+- All whole numbers (budget, cost, value, steps, position, goals) must fit PostgreSQL's 32-bit `integer` (max 2147483647); larger values return 400.
 - A project is completed when all its tasks are executed.
 - Logins, logouts, project sign-ins/outs and task executions are recorded in the audit log.
 

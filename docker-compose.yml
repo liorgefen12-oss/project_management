@@ -27,6 +27,7 @@ services:
       PORT: 3000
       DATABASE_URL: postgresql://app:app@db:5432/fullstack_db
       SESSION_COOKIE_SECURE: "false" # served over plain HTTP on localhost; Koa rejects secure cookies without HTTPS
+      TRUST_PROXY: "true" # requests arrive through the frontend's nginx, which sets X-Forwarded-*
     ports:
       - "127.0.0.1:3000:3000"
     depends_on:

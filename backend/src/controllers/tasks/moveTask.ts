@@ -28,6 +28,9 @@ export async function moveTask(ctx: Context) {
     //moving task, now locked until transaction is committed or rolled back
 
     if (!dragged_task) return ctx.throw(404, messages[404].taskNotFound);
+    if (dragged_task.executed) {
+      ctx.throw(409, messages[409].executedTaskReadOnly);
+    }
 
     //an array of all tasks in the project
     const board = await getProjectBoardTasks(trx, dragged_task.project);

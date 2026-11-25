@@ -30,7 +30,6 @@ describe("creating and editing tasks", () => {
       cost: 1,
       value: 1,
       steps: 1,
-      position: 2,
       project: projectId,
     });
 
@@ -82,7 +81,6 @@ describe("creating and editing tasks", () => {
       cost: 1,
       value: 1,
       steps: 1,
-      position: 2,
       project: projectId,
       executed: true,
     });

@@ -6,7 +6,7 @@ import {
   updateProject,
 } from "../../database/queries/projects.js";
 import { insertTask } from "../../database/queries/tasks.js";
-import { projectId, projectId_empty, useQueryDatabase } from "./fakeDB.js";
+import { projectId, projectId_empty, useQueryDatabase } from "./testDatabase.js";
 
 describe.skipIf(!process.env.TEST_DATABASE_URL)("project completion", () => {
   const getDatabase = useQueryDatabase();

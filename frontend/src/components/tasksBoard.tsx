@@ -97,7 +97,12 @@ export default function TasksBoard({
                 event.preventDefault();
                 setDropPosition(task.position);
               }}
-              onDragLeave={() => setDropPosition(undefined)}
+              onDragLeave={(event) => {
+                // Moving over the card's own children also fires dragleave
+                if (event.currentTarget.contains(event.relatedTarget as Node | null))
+                  return;
+                setDropPosition(undefined);
+              }}
               onDrop={(event) => {
                 event.preventDefault();
                 drop(task.position);
@@ -110,7 +115,7 @@ export default function TasksBoard({
                 onEdit={onEdit}
                 isExecuting={executingTaskId === task.task_id}
                 isDragging={draggedId === task.task_id}
-                draggable={canReorder}
+                draggable={canReorder && !task.executed}
                 onDragStart={(event) => {
                   event.dataTransfer.effectAllowed = "move";
                   event.dataTransfer.setData("text/plain", task.task_id);

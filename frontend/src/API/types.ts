@@ -78,9 +78,13 @@ export interface CreateProjectInput {
   goals?: ProjectGoals;
 }
 
-// At least one field must be present (enforced by the backend); goals: null clears them
+// At least one field must be present (enforced by the backend); goals: null clears them.
+// expected_budget = the budget the form was opened with, so a concurrent spend isn't overwritten.
 export type EditProjectInput = Partial<
-  Omit<CreateProjectInput, "goals"> & { goals: ProjectGoals | null }
+  Omit<CreateProjectInput, "goals"> & {
+    goals: ProjectGoals | null;
+    expected_budget: number;
+  }
 >;
 
 export interface EditProjectResponse {
@@ -88,13 +92,13 @@ export interface EditProjectResponse {
   project: Project;
 }
 
+// The backend appends new tasks to the end of the board
 export interface CreateTaskInput {
   task_name: string;
   description: string;
   cost: number;
   value: number;
   steps: number;
-  position: number;
   project: string;
   predecessor_ids?: string[];
 }

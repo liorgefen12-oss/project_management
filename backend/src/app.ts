@@ -24,10 +24,14 @@ export interface AppOptions {
   secureCookies: boolean;
   sessionSecret: string;
   sessionStore: SessionStore;
+  trustProxy?: boolean;
 }
 
 export function createApp(options: AppOptions) {
-  const app = new Koa({ keys: [options.sessionSecret] });
+  const app = new Koa({
+    keys: [options.sessionSecret],
+    proxy: options.trustProxy ?? false,
+  });
 
   app.use(errorHandler);
   app.use(helmet());

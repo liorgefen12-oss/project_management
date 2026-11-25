@@ -429,7 +429,6 @@ describe("controller audit actions", () => {
     cost: 1,
     value: 1,
     steps: 1,
-    position: 3,
     project: projectId,
   };
 
@@ -453,7 +452,7 @@ describe("controller audit actions", () => {
     expect(response.body).toEqual(created);
     expect(insertTask).toHaveBeenCalledWith(
       expect.objectContaining({ isTransaction: true }),
-      taskBody,
+      { ...taskBody, position: predecessor_ids?.length ? 3 : 2 },
       predecessor_ids ?? [],
     );
     expect(logAction).toHaveBeenCalledExactlyOnceWith(
@@ -686,6 +685,48 @@ describe("controller audit actions", () => {
       .patch(`/projects/${projectId}`)
       .send({ value: 5 });
     expect(valueEdit.status).toBe(400);
+    for (const body of [
+      { expected_budget: 100 },
+      { description: "x", expected_budget: 100 },
+      { budget: 2_147_483_648 },
+    ]) {
+      const response = await request(app.callback())
+        .patch(`/projects/${projectId}`)
+        .send(body);
+      expect(response.status).toBe(400);
+    }
+    expect(updateProject).not.toHaveBeenCalled();
+  });
+
+  it("rejects a budget edit when the budget changed since the client loaded it", async () => {
+    const current: Project = {
+      project_id: projectId,
+      name: "Project",
+      description: "",
+      budget: 90,
+      value: 0,
+      goals: null,
+      goals_met: null,
+    };
+    vi.mocked(getProjectByIdForUpdate).mockResolvedValue(current);
+    vi.mocked(updateProject).mockImplementation(
+      async (_db, _id, changes) => ({ ...current, ...changes }),
+    );
+
+    const stale = await request(app.callback())
+      .patch(`/projects/${projectId}`)
+      .send({ budget: 150, expected_budget: 100 });
+    expect(stale.status).toBe(409);
+    expect(updateProject).not.toHaveBeenCalled();
+    expect(rollbackTransaction).toHaveBeenCalledOnce();
+
+    const fresh = await request(app.callback())
+      .patch(`/projects/${projectId}`)
+      .send({ budget: 150, expected_budget: 90 });
+    expect(fresh.status).toBe(200);
+    expect(updateProject).toHaveBeenCalledWith(expect.anything(), projectId, {
+      budget: 150,
+    });
   });
 
   it("returns 404 when editing a missing project", async () => {
@@ -697,19 +738,43 @@ describe("controller audit actions", () => {
     expect(updateProject).not.toHaveBeenCalled();
   });
 
-  it("rejects creating a task before one of its predecessors", async () => {
+  it("appends a new task after the last board position, ignoring gaps", async () => {
+    vi.mocked(insertTask).mockResolvedValue(task);
     vi.mocked(getProjectBoardTasks).mockResolvedValue([
       { ...boardTask, position: 1 },
-      { ...boardTask, task_id: userId, position: 2 },
+      { ...boardTask, task_id: userId, position: 5 },
     ]);
     const response = await request(app.callback())
       .post("/tasks/")
-      .send({ ...taskBody, position: 2, predecessor_ids: [userId] });
+      .send(taskBody);
+    expect(response.status).toBe(201);
+    expect(insertTask).toHaveBeenCalledWith(
+      expect.anything(),
+      { ...taskBody, position: 6 },
+      [],
+    );
+  });
+
+  it.each([
+    { position: 2 },
+    { cost: 2_147_483_648 },
+    { value: 2_147_483_648 },
+    { steps: 2_147_483_648 },
+  ])("rejects client-chosen positions and out-of-range numbers: %j", async (extra) => {
+    const response = await request(app.callback())
+      .post("/tasks/")
+      .send({ ...taskBody, ...extra });
     expect(response.status).toBe(400);
-    expect(response.body).toEqual({
-      message: "A task must appear after its predecessors",
-    });
     expect(insertTask).not.toHaveBeenCalled();
+  });
+
+  it("returns 400 instead of 500 when a database integer overflows", async () => {
+    vi.mocked(spendBudgetOnTask).mockRejectedValue({ code: "22003" });
+    const response = await request(app.callback()).post(
+      `/tasks/${taskId}/execute`,
+    );
+    expect(response.status).toBe(400);
+    expect(response.body).toEqual({ message: "A number is too large" });
     expect(rollbackTransaction).toHaveBeenCalledOnce();
   });
 
@@ -776,14 +841,27 @@ describe("controller audit actions", () => {
     },
   );
 
-  it("reorders even executed tasks and returns the reordered board", async () => {
+  it("refuses to move an executed task", async () => {
     vi.mocked(getTaskByIdForUpdate).mockResolvedValue({
       ...task,
       executed: true,
     });
+    const response = await request(app.callback())
+      .patch(`/tasks/${taskId}/position`)
+      .send({ position: 2 });
+    expect(response.status).toBe(409);
+    expect(response.body).toEqual({ message: "Executed tasks are read-only" });
+    expect(updateTaskPosition).not.toHaveBeenCalled();
+    expect(rollbackTransaction).toHaveBeenCalledOnce();
+  });
+
+  it("moves a task across executed tasks and returns the reordered board", async () => {
     const reordered = [{ ...boardTask, position: 2 }];
     vi.mocked(getProjectBoardTasks)
-      .mockResolvedValueOnce([boardTask, { ...boardTask, task_id: userId, position: 2 }])
+      .mockResolvedValueOnce([
+        boardTask,
+        { ...boardTask, task_id: userId, position: 2, executed: true },
+      ])
       .mockResolvedValueOnce(reordered);
     const response = await request(app.callback())
       .patch(`/tasks/${taskId}/position`)

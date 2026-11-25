@@ -15,15 +15,19 @@ export async function createTask(ctx: Context) {
     body: z.infer<typeof createTaskSchema>;
   };
 
-  const { predecessor_ids = [], ...task } = body;
+  const { predecessor_ids = [], ...fields } = body;
   try {
     ctx.body = await ctx.database.transaction().execute(async (trx) => {
-      await lockProjectTaskChanges(trx, task.project);
-      if (!(await getProjectByIdForUpdate(trx, task.project))) {
+      await lockProjectTaskChanges(trx, fields.project);
+      if (!(await getProjectByIdForUpdate(trx, fields.project))) {
         ctx.throw(404, messages[404].projectNotFound);
       }
-      await validatePredecessors(ctx, trx, task.project, predecessor_ids);
-      const board = await getProjectBoardTasks(trx, task.project);
+      await validatePredecessors(ctx, trx, fields.project, predecessor_ids);
+      const board = await getProjectBoardTasks(trx, fields.project);
+      // Append to the end of the board; the project lock keeps this race-free
+      const position =
+        board.reduce((max, boardTask) => Math.max(max, boardTask.position), 0) + 1;
+      const task = { ...fields, position };
       validatePredecessorOrder(ctx, board, task.position, predecessor_ids);
       const inserted = await insertTask(trx, task, predecessor_ids);
       await refreshProjectGoalsMet(trx, task.project);

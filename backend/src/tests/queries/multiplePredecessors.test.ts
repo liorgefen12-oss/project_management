@@ -12,7 +12,7 @@ import {
   taskId_1,
   taskId_2,
   taskId_3,
-} from "./fakeDB.js";
+} from "./testDatabase.js";
 
 describe.skipIf(!process.env.TEST_DATABASE_URL)(
   "PostgreSQL queries: multiplePredecessors",

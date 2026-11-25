@@ -1,5 +1,5 @@
     CREATE SCHEMA IF NOT EXISTS public;
-    CREATE SCHEMA audit;
+    CREATE SCHEMA IF NOT EXISTS audit;
 
     CREATE DOMAIN public.outlook_email AS text
       CONSTRAINT outlook_email_format
@@ -22,6 +22,8 @@
       -- { "steps": number, "cost": number }
       goals jsonb,
       goals_met boolean,
+      CONSTRAINT projects_budget_nonnegative CHECK (budget >= 0),
+      CONSTRAINT projects_value_nonnegative CHECK (value >= 0),
       CONSTRAINT projects_goals_shape CHECK (
         goals IS NULL OR (
           jsonb_typeof(goals) = 'object'
@@ -45,6 +47,9 @@
       position integer NOT NULL,
       executed boolean DEFAULT false NOT NULL,
       CONSTRAINT tasks_position_positive CHECK (position > 0),
+      CONSTRAINT tasks_cost_nonnegative CHECK (cost >= 0),
+      CONSTRAINT tasks_value_nonnegative CHECK (value >= 0),
+      CONSTRAINT tasks_steps_positive CHECK (steps > 0),
       CONSTRAINT tasks_project_position_uq UNIQUE (project, position)
         DEFERRABLE INITIALLY DEFERRED,
       CONSTRAINT tasks_project_fkey FOREIGN KEY (project)
@@ -61,6 +66,9 @@
       CONSTRAINT task_predecessors_predecessor_id_fkey FOREIGN KEY (predecessor_id)
         REFERENCES public.tasks(task_id) ON DELETE CASCADE
     );
+
+    CREATE INDEX task_predecessors_predecessor_id_idx
+      ON public.task_predecessors (predecessor_id);
 
     CREATE TABLE audit.task_actions (
       action_id integer GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
@@ -85,6 +93,11 @@
         REFERENCES audit.task_actions(action_id)
     );
 
+    CREATE INDEX logs_project_id_created_at_idx
+      ON audit.logs (project_id, created_at DESC, log_id DESC);
+    CREATE INDEX logs_created_at_idx
+      ON audit.logs (created_at DESC, log_id DESC);
+
     CREATE FUNCTION public.update_task_position(p_task_id uuid, p_new_position integer)
     RETURNS void LANGUAGE plpgsql AS $$
     DECLARE
@@ -96,7 +109,8 @@
       FROM public.tasks WHERE task_id = p_task_id FOR UPDATE;
 
       IF NOT FOUND THEN
-        RAISE EXCEPTION 'Task % does not exist', p_task_id;
+        RAISE EXCEPTION 'Task % does not exist', p_task_id
+          USING ERRCODE = 'no_data_found';
       END IF;
 
       SELECT MAX(position) INTO v_max_pos
@@ -104,7 +118,8 @@
 
       IF p_new_position < 1 OR p_new_position > v_max_pos THEN
         RAISE EXCEPTION 'Position % is out of range (1..%)',
-          p_new_position, v_max_pos;
+          p_new_position, v_max_pos
+          USING ERRCODE = 'numeric_value_out_of_range';
       END IF;
 
       IF p_new_position = v_old_pos THEN RETURN; END IF;

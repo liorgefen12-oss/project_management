@@ -282,7 +282,7 @@
     },
     {
       "name": "4. Tasks - changes database",
-      "description": "Run after Create project. Creates two unexecuted tasks and one task depending on both, proves it is blocked, executes both predecessors, then executes the dependent task. Initial project budget must cover 40 total cost. On this fresh fixture the final budget is 60 and value is 20. Do not rerun this folder on the same project without choosing unused positions or creating another project. WARNING: writes permanent task and audit records and changes project budget/value.",
+      "description": "Run after Create project. Creates two unexecuted tasks and one task depending on both, proves it is blocked, executes both predecessors, then executes the dependent task. Initial project budget must cover 40 total cost. On this fresh fixture the final budget is 60 and value is 20. New tasks are appended to the end of the board automatically. WARNING: writes permanent task and audit records and changes project budget/value.",
       "item": [
         {
           "name": "Create first predecessor task",
@@ -293,7 +293,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"task_name\": \"First prerequisite\",\n  \"description\": \"First branch of the dependency graph\",\n  \"cost\": 10,\n  \"value\": 5,\n  \"steps\": 1,\n  \"position\": 1,\n  \"executed\": false,\n  \"predecessor_ids\": [],\n  \"project\": \"{{projectId}}\"\n}",
+              "raw": "{\n  \"task_name\": \"First prerequisite\",\n  \"description\": \"First branch of the dependency graph\",\n  \"cost\": 10,\n  \"value\": 5,\n  \"steps\": 1,\n  \"predecessor_ids\": [],\n  \"project\": \"{{projectId}}\"\n}",
               "options": { "raw": { "language": "json" } }
             },
             "url": "{{baseUrl}}/tasks/",
@@ -327,7 +327,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"task_name\": \"Second prerequisite\",\n  \"description\": \"Second branch of the dependency graph\",\n  \"cost\": 10,\n  \"value\": 5,\n  \"steps\": 1,\n  \"position\": 2,\n  \"project\": \"{{projectId}}\"\n}",
+              "raw": "{\n  \"task_name\": \"Second prerequisite\",\n  \"description\": \"Second branch of the dependency graph\",\n  \"cost\": 10,\n  \"value\": 5,\n  \"steps\": 1,\n  \"project\": \"{{projectId}}\"\n}",
               "options": { "raw": { "language": "json" } }
             },
             "url": "{{baseUrl}}/tasks/",
@@ -361,11 +361,11 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"task_name\": \"Dependent task\",\n  \"description\": \"Requires both prerequisites to be executed\",\n  \"cost\": 20,\n  \"value\": 10,\n  \"steps\": 2,\n  \"position\": 3,\n  \"executed\": false,\n  \"predecessor_ids\": [\"{{firstPredecessorId}}\", \"{{secondPredecessorId}}\"],\n  \"project\": \"{{projectId}}\"\n}",
+              "raw": "{\n  \"task_name\": \"Dependent task\",\n  \"description\": \"Requires both prerequisites to be executed\",\n  \"cost\": 20,\n  \"value\": 10,\n  \"steps\": 2,\n  \"predecessor_ids\": [\"{{firstPredecessorId}}\", \"{{secondPredecessorId}}\"],\n  \"project\": \"{{projectId}}\"\n}",
               "options": { "raw": { "language": "json" } }
             },
             "url": "{{baseUrl}}/tasks/",
-            "description": "Saves taskId for all following dependent-task requests. Both predecessor IDs must refer to existing tasks in the same project. Duplicate/malformed IDs or the legacy predecessor field return 400; missing projects/predecessors return 404; an occupied position returns 409. Returns 201."
+            "description": "Saves taskId for all following dependent-task requests. Both predecessor IDs must refer to existing tasks in the same project. Duplicate/malformed IDs or the legacy predecessor field return 400; missing projects/predecessors return 404. The position is assigned by the server (end of the board); sending position returns 400. Returns 201."
           },
           "event": [
             {

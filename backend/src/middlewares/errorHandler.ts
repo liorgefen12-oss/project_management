@@ -16,6 +16,12 @@ export async function errorHandler(ctx: Context, next: Next) {
       };
       return;
     }
+    // PostgreSQL numeric_value_out_of_range, e.g. a project's value overflowing a 32-bit integer
+    if (err?.code === "22003") {
+      ctx.status = 400;
+      ctx.body = { message: messages[400].numberOutOfRange };
+      return;
+    }
     //no 4xx status defined, so the default is a server error
     const status = err.status ?? 500;
     ctx.status = status;

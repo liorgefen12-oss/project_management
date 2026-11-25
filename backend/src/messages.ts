@@ -16,6 +16,8 @@ export const messages = {
     outlookEmailRequired: "Must be an @outlook.com email",
     duplicatePredecessors: "Duplicate predecessor IDs",
     nothingToUpdate: "Nothing to update",
+    expectedBudgetWithoutBudget: "expected_budget can only be sent together with budget",
+    numberOutOfRange: "A number is too large",
     validationErrors(issues: readonly { message: string }[]) {
       return issues.map((issue) => issue.message);
     },
@@ -35,7 +37,9 @@ export const messages = {
     taskPositionTaken: "A task already exists in this position",
     taskReferenceMissing: "Project or predecessor no longer exists",
     taskAlreadyExecuted: "Task was already executed",
-    executedTaskReadOnly: "Executed tasks cannot be edited",
+    executedTaskReadOnly: "Executed tasks are read-only",
+    budgetChangedMeanwhile:
+      "The budget changed since you opened the form. Reload the project and try again",
     insufficientBudget: "Not enough budget",
     invalidPredecessors: "Task predecessors must exist and be executed without cycles",
     completePredecessorFirst(taskName: string) {

@@ -10,7 +10,7 @@ import {
   projectId,
   taskId_2 as secondId,
   taskId_3 as thirdId,
-} from "./fakeDB.js";
+} from "./testDatabase.js";
 
 describe.skipIf(!process.env.TEST_DATABASE_URL)(
   "PostgreSQL queries: insertProjectsAndTasks",

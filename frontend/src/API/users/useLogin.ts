@@ -13,6 +13,10 @@ export function useLogin() {
         body: JSON.stringify(credentials),
       }),
     onSuccess: (user) => {
+      // Drop anything cached from a previous (e.g. expired) session
+      client.removeQueries({
+        predicate: (query) => query.queryKey[0] !== queryKeys.users.me[0],
+      });
       client.setQueryData(queryKeys.users.me, user);
       useGlobalStore.getState().setUser(user);
     },

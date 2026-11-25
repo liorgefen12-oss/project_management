@@ -28,6 +28,8 @@ type FieldsFormProps = {
   initial: TaskFields;
   // Tasks that may be chosen as predecessors (they must come earlier on the board)
   candidates: BoardTask[];
+  // Pre-selected predecessors (the task's current ones when editing)
+  initialPredecessorIds: string[];
   // Edits replace the predecessor list only when asked to
   predecessorsOptional: boolean;
   pending: boolean;
@@ -40,6 +42,7 @@ function TaskFieldsForm({
   title,
   initial,
   candidates,
+  initialPredecessorIds,
   predecessorsOptional,
   pending,
   error,
@@ -49,7 +52,9 @@ function TaskFieldsForm({
   const [fields, setFields] = useState(initial);
   const [changePredecessors, setChangePredecessors] =
     useState(!predecessorsOptional);
-  const [predecessorIds, setPredecessorIds] = useState<string[]>([]);
+  const [predecessorIds, setPredecessorIds] = useState<string[]>(
+    initialPredecessorIds,
+  );
 
   function update<K extends keyof TaskFields>(key: K, value: TaskFields[K]) {
     setFields((current) => ({ ...current, [key]: value }));
@@ -146,7 +151,7 @@ function TaskFieldsForm({
                 checked={changePredecessors}
                 onChange={(e) => setChangePredecessors(e.target.checked)}
               />{" "}
-              Replace the current predecessors
+              Change the predecessors
             </label>
           )}
           {changePredecessors &&
@@ -190,14 +195,13 @@ export function CreateTaskForm({
   onClose,
 }: CreateTaskFormProps) {
   const create = useCreateTask();
-  const position =
-    tasks.reduce((max, task) => Math.max(max, task.position), 0) + 1;
 
   return (
     <TaskFieldsForm
       title="New task"
       initial={emptyFields}
       candidates={tasks}
+      initialPredecessorIds={[]}
       predecessorsOptional={false}
       pending={create.isPending}
       error={create.error ? errorMessage(create.error) : null}
@@ -206,7 +210,6 @@ export function CreateTaskForm({
         create.mutate(
           {
             ...fields,
-            position,
             project: projectId,
             predecessor_ids: predecessorIds,
           },
@@ -250,12 +253,16 @@ export function EditTaskForm({ taskId, tasks, onClose }: EditTaskFormProps) {
     value: current.value,
     steps: current.steps,
   };
+  const currentPredecessorIds = (
+    tasks.find((t) => t.task_id === taskId)?.predecessor_ids ?? []
+  ).map((p) => p.predecessor_id);
 
   return (
     <TaskFieldsForm
       title={`Edit "${current.task_name}"`}
       initial={initial}
       candidates={tasks.filter((t) => t.position < current.position)}
+      initialPredecessorIds={currentPredecessorIds}
       predecessorsOptional
       pending={edit.isPending}
       error={edit.error ? errorMessage(edit.error) : null}
@@ -266,7 +273,11 @@ export function EditTaskForm({ taskId, tasks, onClose }: EditTaskFormProps) {
           if (fields[key] !== initial[key])
             Object.assign(changes, { [key]: fields[key] });
         }
-        if (predecessorIds) changes.predecessor_ids = predecessorIds;
+        const predecessorsChanged =
+          predecessorIds !== undefined &&
+          (predecessorIds.length !== currentPredecessorIds.length ||
+            predecessorIds.some((id) => !currentPredecessorIds.includes(id)));
+        if (predecessorsChanged) changes.predecessor_ids = predecessorIds;
         if (Object.keys(changes).length === 0) return onClose();
         edit.mutate({ taskId, changes }, { onSuccess: onClose });
       }}

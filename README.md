@@ -62,7 +62,8 @@ nginx for serving; the backend runs its compiled JavaScript with Node.js.
 ```
 backend/          REST API      → see backend/README.md
 frontend/         React app     → see frontend/README.md
-backend/01-create-test-db.sql  database setup script
+backend/01-create-test-db.sql            creates the empty test database (new Docker volumes only)
+backend/src/database/db-schemas.sql      database schema (new Docker volumes and integration tests)
 assets/           images
 docker-compose.yml
 ```

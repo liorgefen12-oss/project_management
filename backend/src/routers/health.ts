@@ -1,4 +1,4 @@
-import { Router } from '@koa/router';
+import Router from '@koa/router';
 
 export const healthRouter = new Router({ prefix: '/health' });
 
