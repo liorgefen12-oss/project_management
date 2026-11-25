@@ -3,6 +3,14 @@
 REST API for the project management board, built with Koa, TypeScript, PostgreSQL and Kysely.
 tested with Vitest.
 
+Project and task queries each live in their own function files under
+`src/database/queries/projects/` and `src/database/queries/tasks/`.
+The sibling `projects.ts` and `tasks.ts` files re-export them for callers.
+
+Task execution fetches the predecessor graph once and reuses it for the execution
+check and error message. Internal validation includes cyclic or missing
+references; the predecessor-list API keeps its existing response format.
+
 ## Getting started
 
 Requirements:

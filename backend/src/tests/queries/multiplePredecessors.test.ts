@@ -18,6 +18,7 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
   "PostgreSQL queries: multiplePredecessors",
   () => {
     const getDatabase = useQueryDatabase();
+
     it("returns multiple predecessors once, including a shared ancestor", async () => {
       const database = getDatabase();
       await database

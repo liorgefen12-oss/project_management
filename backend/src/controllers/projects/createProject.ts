@@ -14,6 +14,7 @@ export async function createProject(ctx: Context) {
     ctx.status = 201;
   } catch (err: any) {
     if (err?.code === "23505") {
+      //unique constraint violation
       ctx.throw(409, messages[409].projectAlreadyExists);
     }
     throw err;

@@ -7,8 +7,10 @@ import { getProjectByItsName } from "../controllers/projects/getProjectByItsName
 import { getProjectCompletion } from "../controllers/projects/getProjectCompletion.js";
 import { listProjects } from "../controllers/projects/listProjects.js";
 import { listProjectTasks } from "../controllers/projects/listProjectTasks.js";
-import { signInToProject } from "../controllers/projects/signInToProject.js";
-import { signOutOfProject } from "../controllers/projects/signOutOfProject.js";
+import {
+  signInToProject,
+  signOutOfProject,
+} from "../controllers/projects/signXxxProject.js";
 import { requireAuthentication } from "../middlewares/authRequirer.js";
 import { validate } from "../middlewares/zodValidator.js";
 import {
@@ -30,15 +32,27 @@ projectsRouter.get("/", listProjects);
 projectsRouter.post("/", validate(createProjectRequestSchema), createProject);
 
 // One project: the UI needs its current budget and value
-projectsRouter.get("/by-name", validate(projectNameRequestSchema), getProjectByItsName);
+projectsRouter.get(
+  "/by-name",
+  validate(projectNameRequestSchema),
+  getProjectByItsName,
+);
 projectsRouter.get("/:id", validate(idRequestSchema), getProject);
-projectsRouter.get("/:id/completed", validate(idRequestSchema), getProjectCompletion);
+projectsRouter.get(
+  "/:id/completed",
+  validate(idRequestSchema),
+  getProjectCompletion,
+);
 
 // Edit name, description, budget and/or goals (value only changes by executing tasks)
 projectsRouter.patch("/:id", validate(updateProjectRequestSchema), editProject);
 
 // All tasks of a project, in board order
-projectsRouter.get("/:id/tasks", validate(projectTasksRequestSchema), listProjectTasks);
+projectsRouter.get(
+  "/:id/tasks",
+  validate(projectTasksRequestSchema),
+  listProjectTasks,
+);
 
 projectsRouter.post("/:id/sign-in", validate(idRequestSchema), signInToProject);
 projectsRouter.post(

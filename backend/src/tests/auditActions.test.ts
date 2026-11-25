@@ -348,6 +348,7 @@ describe("controller audit actions", () => {
     expect(areTaskPredecessorsExecuted).toHaveBeenCalledWith(
       expect.objectContaining({ isTransaction: true }),
       taskId,
+      [],
     );
   });
 

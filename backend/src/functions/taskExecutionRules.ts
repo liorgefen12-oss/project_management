@@ -34,11 +34,15 @@ async function areTaskPredecessorsExecuted(
   db: Kysely<Database>,
   taskId: string,
 ): Promise<ExecutionCheck> {
-  if (await queryPredecessorExecution(db, taskId)) {
+  const predecessors = await getTaskAllPredecessors(db, taskId, {
+    includeInvalid: true,
+  });
+  if (await queryPredecessorExecution(db, taskId, predecessors)) {
     return { executable: true, reason: "" };
   }
-  const predecessors = await getTaskAllPredecessors(db, taskId);
-  const unfinished = predecessors.find((predecessor) => !predecessor.executed);
+  const unfinished = predecessors.find(
+    (predecessor) => predecessor.task_id !== taskId && !predecessor.executed,
+  );
   const unfinishedTask = unfinished
     ? await getTaskById(db, unfinished.task_id)
     : undefined;

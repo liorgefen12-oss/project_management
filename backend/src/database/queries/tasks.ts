@@ -1,4 +1,3 @@
-//re-export file for queries in queries/tasks
 export { areTaskPredecessorsExecuted } from "./tasks/areTaskPredecessorsExecuted.js";
 export { getProjectBoardTasks } from "./tasks/getProjectBoardTasks.js";
 export { getProjectTaskPredecessors } from "./tasks/getProjectTaskPredecessors.js";
@@ -12,3 +11,5 @@ export { lockProjectTaskChanges } from "./tasks/lockProjectTaskChanges.js";
 export { markExecuted } from "./tasks/markExecuted.js";
 export { updateTask } from "./tasks/updateTask.js";
 export { updateTaskPosition } from "./tasks/updateTaskPosition.js";
+
+//re-export file for queries in queries/tasks

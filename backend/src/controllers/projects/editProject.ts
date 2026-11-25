@@ -17,12 +17,14 @@ export async function editProject(ctx: Context) {
 
   try {
     const project = await ctx.database.transaction().execute(async (trx) => {
-      const current = await getProjectByIdForUpdate(trx, params.id);
+      const current = await getProjectByIdForUpdate(trx, params.id); //get the current projectand lock it until transaction commits or rolls back
       if (!current) return ctx.throw(404, messages[404].projectNotFound);
       const updated = await updateProject(trx, params.id, body);
       // Same audit action as spending budget on a task
       if (updated.budget !== current.budget) {
-        await logAction(trx, userId, "budget changed", { projectId: params.id });
+        await logAction(trx, userId, "budget changed", {
+          projectId: params.id,
+        });
       }
       if (
         updated.goals?.cost !== current.goals?.cost ||

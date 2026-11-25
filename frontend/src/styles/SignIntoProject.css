@@ -1,0 +1,107 @@
+.project-entry {
+  display: grid;
+  grid-template-columns: minmax(0, 0.95fr) minmax(0, 1fr);
+  gap: var(--space-6);
+  width: min(1080px, 100%);
+  margin: var(--space-8) auto;
+  padding: 0 var(--space-6);
+}
+
+.project-entry > .panel {
+  min-width: 0;
+  padding: var(--space-8);
+  border: 1px solid var(--color-border);
+  background: #fffdf8;
+}
+
+.project-entry__welcome {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.project-entry__headline {
+  max-width: 12ch;
+  font-size: clamp(30px, 3.5vw, 42px);
+  line-height: 1.15;
+  letter-spacing: -0.035em;
+}
+
+.project-entry__intro {
+  margin: var(--space-3) 0 var(--space-6);
+  color: var(--color-text-muted);
+  line-height: 1.65;
+}
+
+.project-entry__illustration {
+  display: block;
+  width: min(100%, 270px);
+  height: auto;
+  margin: auto;
+  mix-blend-mode: multiply;
+}
+
+.project-entry__selection .field__input--large {
+  padding: var(--space-3);
+  font-size: var(--font-size-md);
+}
+
+.project-entry__empty {
+  margin: 0;
+  color: var(--color-text-muted);
+  line-height: 1.65;
+}
+
+.project-entry .panel__title {
+  margin-bottom: var(--space-3);
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: var(--font-size-xl);
+  letter-spacing: -0.025em;
+}
+
+.project-entry__goals {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-4);
+}
+
+.project-entry .field__input {
+  min-width: 0;
+}
+
+.project-entry .btn {
+  min-height: 44px;
+}
+
+.project-entry :is(.btn, .field__input):focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 3px;
+}
+
+@media (max-width: 760px) {
+  .project-entry {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-5);
+    margin: var(--space-5) auto;
+    padding: 0 var(--space-4);
+  }
+
+  .project-entry > .panel {
+    padding: var(--space-6);
+  }
+
+  .project-entry__headline {
+    max-width: none;
+  }
+
+  .project-entry__illustration {
+    width: min(100%, 200px);
+  }
+}
+
+@media (max-width: 380px) {
+  .project-entry__goals {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0;
+  }
+}

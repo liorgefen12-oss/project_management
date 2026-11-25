@@ -85,6 +85,12 @@ describe("task execution checks", () => {
     expect(queryPredecessorExecution).toHaveBeenCalledWith(
       database,
       task.task_id,
+      [{ task_id: "earlier", executed: false }],
+    );
+    expect(getTaskAllPredecessors).toHaveBeenCalledExactlyOnceWith(
+      database,
+      task.task_id,
+      { includeInvalid: true },
     );
     expect(getTaskById).toHaveBeenCalledWith(database, "earlier");
     expect(getTaskProjectBudget).not.toHaveBeenCalled();

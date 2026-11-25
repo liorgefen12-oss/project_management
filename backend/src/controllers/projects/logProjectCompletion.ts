@@ -8,12 +8,12 @@ import type { Database } from "../../database/types.js";
 
 // Called after task execution while the transaction holds the project row lock.
 export async function logProjectCompletion(
-  transaction: Transaction<Database>,
+  trx: Transaction<Database>,
   userId: string,
   projectId: string,
 ) {
-  await refreshProjectGoalsMet(transaction, projectId);
-  if (await areAllProjectTasksExecuted(transaction, projectId)) {
-    await logAction(transaction, userId, "project completed", { projectId });
+  await refreshProjectGoalsMet(trx, projectId);
+  if (await areAllProjectTasksExecuted(trx, projectId)) {
+    await logAction(trx, userId, "project completed", { projectId });
   }
 }

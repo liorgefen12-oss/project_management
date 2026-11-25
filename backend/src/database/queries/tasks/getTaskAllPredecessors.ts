@@ -1,11 +1,22 @@
 import { sql, type Kysely } from "kysely";
 import type { Database } from "../../types.js";
 
+export interface TaskPredecessor {
+  task_id: string;
+  executed: boolean;
+  invalid?: boolean;
+}
+
 export async function getTaskAllPredecessors(
   db: Kysely<Database>,
   taskId: string,
-): Promise<{ task_id: string; executed: boolean }[]> {
-  const result = await sql<{ task_id: string; executed: boolean }>`
+  options: { includeInvalid?: boolean } = {},
+): Promise<TaskPredecessor[]> {
+  const result = await sql<{
+    task_id: string;
+    executed: boolean | null;
+    invalid: boolean;
+  }>`
     with recursive chain as (
       select predecessor_id as task_id, 1 as depth,
              array[${taskId}::uuid, predecessor_id] as path,
@@ -18,12 +29,19 @@ export async function getTaskAllPredecessors(
       join chain c on p.task_id = c.task_id
       where not c.cycle
     )
-    select t.task_id, t.executed
-    from public.tasks t
-    join (select task_id, min(depth) as depth from chain group by task_id) c
-      on t.task_id = c.task_id
-    where t.task_id <> ${taskId}::uuid
+    select c.task_id, t.executed, (c.cycle or t.task_id is null) as invalid
+    from (
+      select task_id, min(depth) as depth, bool_or(cycle) as cycle
+      from chain group by task_id
+    ) c
+    left join public.tasks t on t.task_id = c.task_id
+    where ${options.includeInvalid ?? false}
+       or (t.task_id is not null and t.task_id <> ${taskId}::uuid)
     order by c.depth, t.task_id
   `.execute(db);
-  return result.rows;
+  return result.rows.map((row) => ({
+    task_id: row.task_id,
+    executed: row.executed ?? false,
+    ...(options.includeInvalid && row.invalid ? { invalid: true } : {}),
+  }));
 }
