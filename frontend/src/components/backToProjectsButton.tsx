@@ -15,7 +15,7 @@ export default function BackToProjectsButton({
       disabled={disabled}
       title="Leave this project and choose another one"
     >
-      ← All projects
+      ← Back to all projects
     </button>
   );
 }

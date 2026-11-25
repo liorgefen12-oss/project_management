@@ -29,14 +29,15 @@ export default function ProjectHeader({
         <img className="project-header__icon" src={icon} alt="" />
       </h1>
       <div className="project-header__switch">
-        <BackToProjectsButton onClick={onLeaveProject} disabled={busy} />
         <ProjectDropdown
           projects={projects}
           value={projectId}
           onChange={onSelectProject}
           variant="small"
           disabled={busy}
-        />
+        />{" "}
+        <span></span>
+        <BackToProjectsButton onClick={onLeaveProject} disabled={busy} />
       </div>
       <UserInfo onLogout={onLogout} disabled={busy} />
     </header>
