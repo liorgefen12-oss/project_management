@@ -1,5 +1,6 @@
 import type { Context } from "koa";
 import type { z } from "zod";
+import { logAction } from "../../database/queries/audit_logs.js";
 import {
   getProjectByIdForUpdate,
   refreshProjectGoalsMet,
@@ -26,6 +27,10 @@ export async function createTask(ctx: Context) {
       validatePredecessorOrder(ctx, board, task.position, predecessor_ids);
       const inserted = await insertTask(trx, task, predecessor_ids);
       await refreshProjectGoalsMet(trx, task.project);
+      await logAction(trx, ctx.session!.userId, "task created", {
+        projectId: inserted.project,
+        taskId: inserted.task_id,
+      });
       return inserted;
     });
     ctx.status = 201;

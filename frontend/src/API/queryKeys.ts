@@ -10,8 +10,6 @@ export const queryKeys = {
   projects: {
     list: () => ["projects", "list"] as const,
     detail: projectDetail,
-    byNamePrefix: ["projects", "by-name"] as const,
-    byName: (name: string) => ["projects", "by-name", name] as const,
     completion: (projectId: string) =>
       [...projectDetail(projectId), "completion-status"] as const,
     tasks: (projectId: string) =>

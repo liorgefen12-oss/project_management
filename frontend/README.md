@@ -25,6 +25,7 @@ To run the frontend in Docker instead, use `docker compose up --build -d --wait`
 
 - Log in and log out
 - Choose a project, or switch between projects
+- Responsive project welcome page with a book-stack illustration and creation form
 - Create and edit projects, including budget and goals
 - See whether a completed project met both its cost and steps goals
 - Create, edit, reorder and execute tasks

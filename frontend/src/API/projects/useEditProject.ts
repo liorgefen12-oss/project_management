@@ -19,9 +19,8 @@ export function useEditProject() {
       }),
     onSuccess: ({ project }) => {
       qc.setQueryData(queryKeys.projects.detail(project.project_id), project);
-      // The name shows up in the project dropdown and by-name lookups
+      // The name shows up in the project dropdown
       qc.invalidateQueries({ queryKey: queryKeys.projects.list() });
-      qc.invalidateQueries({ queryKey: queryKeys.projects.byNamePrefix });
       // A budget change is written to the audit log
       qc.invalidateQueries({ queryKey: queryKeys.auditLogs.all });
     },

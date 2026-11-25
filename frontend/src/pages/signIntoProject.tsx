@@ -1,14 +1,15 @@
 import { useState, type FormEvent } from "react";
-import { ApiError, errorMessage } from "../API/apiErrorClass";
+import { errorMessage } from "../API/apiErrorClass";
 import { useCreateProject } from "../API/projects/useCreateProject";
-import { useProjectByName } from "../API/projects/useProjectByName";
 import type { Project } from "../API/types";
 import ProjectDropdown from "../components/projectDropdown";
 import ProjectGoalsFields from "../components/projectGoalsFields";
 import UserInfo from "../components/userInfo";
 import { goalsFromInputs } from "../functions/projectGoals";
+import bookStack from "../../../assets/pictures/book-stack.jpg";
 import "../styles/input.css";
 import "../styles/ProjectHeader.css";
+import "../styles/SignIntoProject.css";
 
 type SignIntoProjectProps = {
   projects: Project[];
@@ -17,67 +18,10 @@ type SignIntoProjectProps = {
   busy: boolean;
 };
 
-function FindProject({ onEnter, busy }: Pick<SignIntoProjectProps, "onEnter" | "busy">) {
-  const [draft, setDraft] = useState("");
-  const [name, setName] = useState("");
-  const found = useProjectByName(name);
-
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    setName(draft);
-  }
-
-  return (
-    <section className="panel" aria-label="Find a project">
-      <h2 className="panel__title">Find by name</h2>
-      <form className="inline-form" onSubmit={handleSubmit}>
-        <label className="field">
-          <span className="field__label">Project name</span>
-          <input
-            className="field__input"
-            value={draft}
-            onChange={(e) => setDraft(e.target.value)}
-          />
-        </label>
-        <button type="submit" className="btn btn--secondary" disabled={!draft.trim()}>
-          Find
-        </button>
-      </form>
-      {name.trim() &&
-        (found.isPending ? (
-          <p className="muted">Searching…</p>
-        ) : found.isError ? (
-          <p role="alert" className="alert">
-            {found.error instanceof ApiError && found.error.status === 404
-              ? `No project is called "${name.trim()}".`
-              : errorMessage(found.error)}
-          </p>
-        ) : (
-          <ul className="search-results">
-            <li className="search-results__item">
-              <span>
-                <strong>{found.data.name}</strong>
-                <br />
-                <span className="muted">
-                  Budget {found.data.budget} · Value {found.data.value}
-                </span>
-              </span>
-              <button
-                type="button"
-                className="btn btn--link"
-                onClick={() => onEnter(found.data.project_id)}
-                disabled={busy}
-              >
-                Open
-              </button>
-            </li>
-          </ul>
-        ))}
-    </section>
-  );
-}
-
-function CreateProject({ onEnter, busy }: Pick<SignIntoProjectProps, "onEnter" | "busy">) {
+function CreateProject({
+  onEnter,
+  busy,
+}: Pick<SignIntoProjectProps, "onEnter" | "busy">) {
   const create = useCreateProject();
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
@@ -95,8 +39,11 @@ function CreateProject({ onEnter, busy }: Pick<SignIntoProjectProps, "onEnter" |
   }
 
   return (
-    <section className="panel" aria-label="Create a project">
-      <h2 className="panel__title">New project</h2>
+    <section
+      className="panel project-entry__create"
+      aria-label="Create a project"
+    >
+      <h2 className="panel__title">Create a new project</h2>
       <form onSubmit={handleSubmit}>
         <label className="field">
           <span className="field__label">Name</span>
@@ -104,6 +51,7 @@ function CreateProject({ onEnter, busy }: Pick<SignIntoProjectProps, "onEnter" |
             className="field__input"
             required
             maxLength={50}
+            placeholder="e.g. A community reading corner"
             value={name}
             onChange={(e) => setName(e.target.value)}
           />
@@ -113,16 +61,20 @@ function CreateProject({ onEnter, busy }: Pick<SignIntoProjectProps, "onEnter" |
           <textarea
             className="field__input"
             maxLength={250}
+            rows={3}
+            placeholder="What would you like this project to achieve?"
             value={description}
             onChange={(e) => setDescription(e.target.value)}
           />
         </label>
-        <ProjectGoalsFields
-          costGoal={costGoal}
-          stepsGoal={stepsGoal}
-          onCostGoalChange={setCostGoal}
-          onStepsGoalChange={setStepsGoal}
-        />
+        <div className="project-entry__goals">
+          <ProjectGoalsFields
+            costGoal={costGoal}
+            stepsGoal={stepsGoal}
+            onCostGoalChange={setCostGoal}
+            onStepsGoalChange={setStepsGoal}
+          />
+        </div>
         <label className="field">
           <span className="field__label">Budget</span>
           <input
@@ -140,7 +92,11 @@ function CreateProject({ onEnter, busy }: Pick<SignIntoProjectProps, "onEnter" |
             {errorMessage(create.error)}
           </p>
         )}
-        <button type="submit" className="btn" disabled={busy || create.isPending}>
+        <button
+          type="submit"
+          className="btn btn--block"
+          disabled={busy || create.isPending}
+        >
           {create.isPending ? "Creating…" : "Create and open"}
         </button>
       </form>
@@ -167,31 +123,46 @@ export default function SignIntoProject({
         <h1 className="project-header__title">Project board</h1>
         <UserInfo onLogout={onLogout} disabled={busy} />
       </header>
-      <main className="center-page">
-        <section className="panel" aria-label="Choose a project">
-          <h2 className="panel__title">Choose a project</h2>
-          {projects.length === 0 ? (
-            <p className="muted">No projects available yet. Create one below.</p>
-          ) : (
-            <form onSubmit={handleSubmit}>
-              <ProjectDropdown
-                projects={projects}
-                value={selectedId}
-                onChange={setSelectedId}
-                variant="large"
-                disabled={busy}
-              />
-              <button
-                type="submit"
-                className="btn btn--block"
-                disabled={!selectedId || busy}
-              >
-                {busy ? "Opening…" : "Open project"}
-              </button>
-            </form>
-          )}
+      <main className="project-entry">
+        <section
+          className="panel project-entry__welcome"
+          aria-label="Choose a project"
+        >
+          <div className="project-entry__selection">
+            <h2 className="panel__title">Sign into a project</h2>
+            {projects.length === 0 ? (
+              <p className="project-entry__empty">
+                Your library is waiting for its first project. Create one to get
+                started.
+              </p>
+            ) : (
+              <form onSubmit={handleSubmit}>
+                <ProjectDropdown
+                  projects={projects}
+                  value={selectedId}
+                  onChange={setSelectedId}
+                  variant="large"
+                  disabled={busy}
+                />
+                <button
+                  type="submit"
+                  className="btn btn--block"
+                  disabled={!selectedId || busy}
+                >
+                  {busy ? "Opening…" : "Open project"}
+                </button>
+              </form>
+            )}
+          </div>
+          <img
+            className="project-entry__illustration"
+            src={bookStack}
+            alt="An illustrated stack of colorful books"
+            width={554}
+            height={554}
+          />
         </section>
-        <FindProject onEnter={onEnter} busy={busy} />
+
         <CreateProject onEnter={onEnter} busy={busy} />
       </main>
     </>

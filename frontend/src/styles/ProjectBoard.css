@@ -158,21 +158,3 @@
   outline-offset: -6px;
   background: var(--color-primary-soft);
 }
-
-.search-results {
-  display: grid;
-  gap: var(--space-2);
-  margin: var(--space-3) 0 0;
-  padding: 0;
-  list-style: none;
-}
-.search-results__item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: var(--space-2);
-  padding: var(--space-2) var(--space-3);
-  border-radius: var(--radius-md);
-  background: var(--color-bg);
-  font-size: var(--font-size-sm);
-}

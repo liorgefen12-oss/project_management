@@ -455,6 +455,47 @@ describe("controller audit actions", () => {
       taskBody,
       predecessor_ids ?? [],
     );
+    expect(logAction).toHaveBeenCalledExactlyOnceWith(
+      expect.objectContaining({ isTransaction: true }),
+      userId,
+      "task created",
+      { projectId: created.project, taskId: created.task_id },
+    );
+    expect(vi.mocked(logAction).mock.calls[0]![0]).toBe(
+      vi.mocked(insertTask).mock.calls[0]![0],
+    );
+    expect(commitTransaction).toHaveBeenCalledOnce();
+  });
+
+  it("rolls back task creation if auditing fails", async () => {
+    vi.mocked(insertTask).mockResolvedValue(task);
+    vi.mocked(logAction).mockRejectedValue(new Error("Audit write failed"));
+    const onError = vi.spyOn(console, "error").mockImplementation(() => {});
+    try {
+      const response = await request(app.callback())
+        .post("/tasks/")
+        .send(taskBody);
+
+      expect(response.status).toBe(500);
+      expect(insertTask).toHaveBeenCalledOnce();
+      expect(commitTransaction).not.toHaveBeenCalled();
+      expect(rollbackTransaction).toHaveBeenCalledOnce();
+      expect(onError).toHaveBeenCalled();
+    } finally {
+      onError.mockRestore();
+    }
+  });
+
+  it("does not audit a task whose insert fails", async () => {
+    vi.mocked(insertTask).mockRejectedValue({ code: "23505" });
+    const response = await request(app.callback())
+      .post("/tasks/")
+      .send(taskBody);
+
+    expect(response.status).toBe(409);
+    expect(logAction).not.toHaveBeenCalled();
+    expect(commitTransaction).not.toHaveBeenCalled();
+    expect(rollbackTransaction).toHaveBeenCalledOnce();
   });
 
   it.each([
@@ -470,6 +511,7 @@ describe("controller audit actions", () => {
         .send({ ...taskBody, ...dependencies });
       expect(response.status).toBe(400);
       expect(insertTask).not.toHaveBeenCalled();
+      expect(logAction).not.toHaveBeenCalled();
     },
   );
 
@@ -487,6 +529,7 @@ describe("controller audit actions", () => {
         .send({ ...taskBody, predecessor_ids: [userId, taskId] });
       expect(response.status).toBe(status);
       expect(insertTask).not.toHaveBeenCalled();
+      expect(logAction).not.toHaveBeenCalled();
       expect(rollbackTransaction).toHaveBeenCalledOnce();
     },
   );

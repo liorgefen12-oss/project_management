@@ -15,6 +15,7 @@ export function useCreateTask() {
       client.invalidateQueries({
         queryKey: queryKeys.projects.detail(task.project),
       });
+      client.invalidateQueries({ queryKey: queryKeys.auditLogs.all });
     },
   });
 }

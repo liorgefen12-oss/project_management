@@ -41,6 +41,7 @@ password, and ensure `audit.task_actions` contains these action names:
 - `project sign out`
 - `project completed`
 - `task completed`
+- `task created`
 - `budget changed`
 - `goals changed`
 - `value changed`

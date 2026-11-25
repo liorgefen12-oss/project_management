@@ -47,11 +47,15 @@ Select a configuration in **Run and Debug**, then press **F5**:
 - **Launch full app in Docker (production build):** Builds and runs all three
   services in Docker.
   - Vite builds the frontend files,
-  - serves them, and
+  - nginx serves them, and
   - Node.js runs the compiled backend.
     Rebuild to include source changes.
 
 Both run locally, open http://localhost:5173, and use the same database.
+
+Both Dockerfiles use a single stage, so the final images retain the source code
+and build dependencies. The frontend image includes Node.js for building and
+nginx for serving; the backend runs its compiled JavaScript with Node.js.
 
 ## Project structure
 
