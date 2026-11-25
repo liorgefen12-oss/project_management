@@ -23,6 +23,7 @@ export async function login(ctx: Context) {
   await logAction(ctx.database, user.user_id, "user log in");
   ctx.session = {};
   await ctx.session.regenerate();
+  console.log(typeof ctx.session.regenerate);
   ctx.session!.userId = user.user_id;
   ctx.body = {
     user_id: user.user_id,

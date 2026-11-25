@@ -8,7 +8,9 @@ import { PgSessionStore } from "./sessionStore.js";
 const environment = loadEnvironment();
 const pool = new Pool({ connectionString: environment.DATABASE_URL });
 // Without a listener, an idle client error (e.g. the database restarting) crashes the process
-pool.on("error", (error) => console.error("Idle PostgreSQL client error", error));
+pool.on("error", (error) =>
+  console.error("Idle PostgreSQL client error", error),
+);
 const database = createDatabase(pool);
 const sessionStore = new PgSessionStore(pool);
 const app = createApp({

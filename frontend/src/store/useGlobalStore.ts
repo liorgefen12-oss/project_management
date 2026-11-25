@@ -30,13 +30,15 @@ export const useGlobalStore = create<GlobalState>()(
           projectUserId: projectId ? (get().user?.user_id ?? null) : null,
         }),
       // Logging out (or a 401) also leaves the current project
-      clearUser: () => set({ user: null, projectId: null, projectUserId: null }),
+      clearUser: () =>
+        set({ user: null, projectId: null, projectUserId: null }),
     }),
     {
       name: "project-board",
       storage: createJSONStorage(() => sessionStorage),
-      // The user always comes from GET /users/me; only the open project survives a refresh
+      // The user always comes from GET /users/me; only the project survives a refresh
       partialize: (state) => ({
+        //choose what to save, only some fields
         projectId: state.projectId,
         projectUserId: state.projectUserId,
       }),
