@@ -16,6 +16,7 @@ import {
   markExecuted,
   projectId,
   resetControllerMocks,
+  refreshProjectGoalsMet,
   task,
   taskId,
   userId,
@@ -33,6 +34,7 @@ describe("executing a task", () => {
 
     expect(response.status).toBe(200);
     expect(markExecuted).toHaveBeenCalledWith(expect.anything(), taskId);
+    expect(refreshProjectGoalsMet).toHaveBeenCalledWith(expect.anything(), projectId);
     expect(logAction).toHaveBeenCalledWith(
       expect.anything(),
       userId,

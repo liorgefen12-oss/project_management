@@ -1,12 +1,10 @@
-// validation/schemas.ts
 import { z } from "zod";
 import { messages } from "../messages.js";
 
-const uuid = z.string().uuid().transform((id) => id.toLowerCase());
+const uuid = z.uuid().transform((id) => id.toLowerCase());
 
 export const loginSchema = z.object({
   email: z
-    .string()
     .email()
     .regex(/^[^@\s]+@outlook\.com$/i, messages[400].outlookEmailRequired),
   password: z.string().min(1, messages[400].passwordRequired),
@@ -42,7 +40,7 @@ export const moveTaskSchema = z.object({
   position: z.number().int().positive(),
 }).strict();
 
-export const projectGoalsSchema = z.object({
+const projectGoalsSchema = z.object({
   steps: z.number().int().nonnegative(),
   cost: z.number().int().nonnegative(),
 }).strict();
@@ -61,7 +59,6 @@ export const createTaskSchema = z.object({
   value: z.number().int().nonnegative(),
   steps: z.number().int().positive(),
   position: z.number().int().positive(),
-  executed: z.boolean().optional(),
   predecessor_ids: z
     .array(uuid)
     .refine((ids) => new Set(ids).size === ids.length, messages[400].duplicatePredecessors)
@@ -88,7 +85,7 @@ export const createTaskRequestSchema = z.object({ body: createTaskSchema });
 
 // For edits, every field is optional, but at least one must be present
 export const updateTaskSchema = createTaskSchema
-  .omit({ project: true, position: true, executed: true })
+  .omit({ project: true, position: true })
   .partial()
   .refine((d) => Object.values(d).some((value) => value !== undefined), messages[400].nothingToUpdate);
 

@@ -1,6 +1,9 @@
 import type { Context } from "koa";
 import type { z } from "zod";
-import { projectExists } from "../../database/queries/projects.js";
+import {
+  getProjectByIdForUpdate,
+  refreshProjectGoalsMet,
+} from "../../database/queries/projects.js";
 import { getProjectBoardTasks, insertTask, lockProjectTaskChanges } from "../../database/queries/tasks.js";
 import { messages } from "../../messages.js";
 import type { createTaskSchema } from "../../zod/schemas.js";
@@ -14,14 +17,16 @@ export async function createTask(ctx: Context) {
   const { predecessor_ids = [], ...task } = body;
   try {
     ctx.body = await ctx.database.transaction().execute(async (trx) => {
-      if (!(await projectExists(trx, task.project))) {
+      await lockProjectTaskChanges(trx, task.project);
+      if (!(await getProjectByIdForUpdate(trx, task.project))) {
         ctx.throw(404, messages[404].projectNotFound);
       }
-      await lockProjectTaskChanges(trx, task.project);
       await validatePredecessors(ctx, trx, task.project, predecessor_ids);
       const board = await getProjectBoardTasks(trx, task.project);
       validatePredecessorOrder(ctx, board, task.position, predecessor_ids);
-      return insertTask(trx, task, predecessor_ids);
+      const inserted = await insertTask(trx, task, predecessor_ids);
+      await refreshProjectGoalsMet(trx, task.project);
+      return inserted;
     });
     ctx.status = 201;
   } catch (err: unknown) {

@@ -7,12 +7,11 @@ import { createDatabase } from "../../database/db.js";
 
 export const projectId = "00000000-0000-4000-8000-000000000001";
 export const projectId_empty = "00000000-0000-4000-8000-000000000002";
-export const projectId_other = "00000000-0000-4000-8000-000000000003";
+const projectId_other = "00000000-0000-4000-8000-000000000003";
 export const taskId_1 = "00000000-0000-4000-8000-000000000011";
 export const taskId_2 = "00000000-0000-4000-8000-000000000012";
 export const taskId_3 = "00000000-0000-4000-8000-000000000013";
-export const taskId_other = "00000000-0000-4000-8000-000000000014";
-export const taskId_missing = "00000000-0000-4000-8000-000000000099";
+const taskId_other = "00000000-0000-4000-8000-000000000014";
 
 export function getDirectPredecessors(db: Kysely<Database>, taskId: string) {
   return db

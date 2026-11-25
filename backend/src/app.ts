@@ -40,7 +40,7 @@ export function createApp(options: AppOptions) {
   );
   app.use(bodyParser());
   app.use(healthRouter.routes());
-  app.use(healthRouter.allowedMethods());
+  app.use(healthRouter.allowedMethods()); //no delete, update...
   //session
   app.use(
     createSessionMiddleware(app, {

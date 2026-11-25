@@ -24,6 +24,12 @@ export async function editProject(ctx: Context) {
       if (updated.budget !== current.budget) {
         await logAction(trx, userId, "budget changed", { projectId: params.id });
       }
+      if (
+        updated.goals?.cost !== current.goals?.cost ||
+        updated.goals?.steps !== current.goals?.steps
+      ) {
+        await logAction(trx, userId, "goals changed", { projectId: params.id });
+      }
       return updated;
     });
     ctx.body = { message: messages[200].projectUpdatedSuccessfully, project };

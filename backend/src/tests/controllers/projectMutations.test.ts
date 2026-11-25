@@ -28,6 +28,7 @@ describe("controller behavior", () => {
       budget: 10,
       value: 0,
       goals: null,
+      goals_met: null,
     };
     vi.mocked(insertProject).mockResolvedValue(newProject);
     const response = await request(app.callback())
@@ -50,6 +51,7 @@ describe("controller behavior", () => {
       budget: 100,
       value: 0,
       goals: null,
+      goals_met: null,
     };
     vi.mocked(getProjectByIdForUpdate).mockResolvedValue(current);
     vi.mocked(updateProject).mockResolvedValue({ ...current, budget: 150 });
@@ -78,6 +80,57 @@ describe("controller behavior", () => {
       .patch(`/projects/${projectId}`)
       .send({ value: 5 }); //a user cant update project's value - its calculated from the tasks' values
     expect(valueEdit.status).toBe(400);
+  });
+
+  it.each([
+    [null, { cost: 50, steps: 5 }],
+    [{ cost: 50, steps: 5 }, { cost: 60, steps: 5 }],
+    [{ cost: 50, steps: 5 }, null],
+  ])("logs goals changing from %j to %j", async (before, after) => {
+    const current = {
+      project_id: projectId,
+      name: "Project",
+      description: "",
+      budget: 100,
+      value: 0,
+      goals: before,
+      goals_met: null,
+    };
+    vi.mocked(getProjectByIdForUpdate).mockResolvedValue(current);
+    vi.mocked(updateProject).mockResolvedValue({ ...current, goals: after });
+
+    const response = await request(app.callback())
+      .patch(`/projects/${projectId}`)
+      .send({ goals: after });
+
+    expect(response.status).toBe(200);
+    expect(logAction).toHaveBeenCalledWith(
+      expect.anything(),
+      userId,
+      "goals changed",
+      { projectId },
+    );
+  });
+
+  it("does not log unchanged goals", async () => {
+    const current = {
+      project_id: projectId,
+      name: "Project",
+      description: "",
+      budget: 100,
+      value: 0,
+      goals: { cost: 50, steps: 5 },
+      goals_met: null,
+    };
+    vi.mocked(getProjectByIdForUpdate).mockResolvedValue(current);
+    vi.mocked(updateProject).mockResolvedValue(current);
+
+    const response = await request(app.callback())
+      .patch(`/projects/${projectId}`)
+      .send({ goals: current.goals });
+
+    expect(response.status).toBe(200);
+    expect(logAction).not.toHaveBeenCalled();
   });
 
   it("returns 404 when editing a missing project", async () => {

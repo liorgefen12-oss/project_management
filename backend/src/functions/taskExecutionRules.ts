@@ -30,7 +30,7 @@ export async function isTaskWithinProjectBudget(
   return { executable: true, reason: "" };
 }
 
-export async function areTaskPredecessorsExecuted(
+async function areTaskPredecessorsExecuted(
   db: Kysely<Database>,
   taskId: string,
 ): Promise<ExecutionCheck> {

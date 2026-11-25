@@ -2,7 +2,12 @@ import type { Context } from "koa";
 import type { z } from "zod";
 import { logAction } from "../../database/queries/audit_logs.js";
 import { spendBudgetOnTask } from "../../database/queries/projects.js";
-import { getTaskByIdForUpdate, markExecuted } from "../../database/queries/tasks.js";
+import {
+  getTaskById,
+  getTaskByIdForUpdate,
+  lockProjectTaskChanges,
+  markExecuted,
+} from "../../database/queries/tasks.js";
 import { canExecuteTask } from "../../functions/taskExecutionRules.js";
 import { messages } from "../../messages.js";
 import type { idParamSchema } from "../../zod/schemas.js";
@@ -15,6 +20,9 @@ export async function executeTask(ctx: Context) {
   const userId = ctx.session!.userId;
 
   const result = await ctx.database.transaction().execute(async (trx) => {
+    const initialTask = await getTaskById(trx, params.id);
+    if (!initialTask) return ctx.throw(404, messages[404].taskNotFound);
+    await lockProjectTaskChanges(trx, initialTask.project);
     const task = await getTaskByIdForUpdate(trx, params.id);
 
     if (!task) return ctx.throw(404, messages[404].taskNotFound);

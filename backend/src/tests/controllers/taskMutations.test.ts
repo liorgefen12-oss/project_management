@@ -1,4 +1,3 @@
-import Koa from "koa";
 import request from "supertest";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -13,9 +12,9 @@ import {
   insertTask,
   projectId,
   resetControllerMocks,
+  refreshProjectGoalsMet,
   task,
   taskId,
-  tasksRouter,
   updateTask,
 } from "./controllerUtilities.js";
 
@@ -38,6 +37,7 @@ describe("creating and editing tasks", () => {
     expect(response.status).toBe(201);
     expect(response.body).toEqual(task);
     expect(insertTask).toHaveBeenCalledOnce();
+    expect(refreshProjectGoalsMet).toHaveBeenCalledWith(expect.anything(), projectId);
   });
 
   it("edits a task", async () => {
@@ -73,5 +73,21 @@ describe("creating and editing tasks", () => {
 
     expect(response.status).toBe(400);
     expect(updateTask).not.toHaveBeenCalled();
+  });
+
+  it("rejects executed=true when creating a task", async () => {
+    const response = await request(app.callback()).post("/tasks/").send({
+      task_name: "Invalid task",
+      description: "",
+      cost: 1,
+      value: 1,
+      steps: 1,
+      position: 2,
+      project: projectId,
+      executed: true,
+    });
+
+    expect(response.status).toBe(400);
+    expect(insertTask).not.toHaveBeenCalled();
   });
 });

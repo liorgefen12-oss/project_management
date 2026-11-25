@@ -19,8 +19,9 @@
       value integer NOT NULL DEFAULT 0,
       description varchar(250) NOT NULL,
       name varchar(50) NOT NULL UNIQUE,
-      -- display-only recommendation: { "steps": number, "cost": number }
+      -- { "steps": number, "cost": number }
       goals jsonb,
+      goals_met boolean,
       CONSTRAINT projects_goals_shape CHECK (
         goals IS NULL OR (
           jsonb_typeof(goals) = 'object'

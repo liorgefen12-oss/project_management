@@ -17,6 +17,7 @@ export interface ProjectsTable {
   description: string;
   name: string;
   goals: ColumnType<ProjectGoals | null, ProjectGoals | null | undefined, ProjectGoals | null>;
+  goals_met: ColumnType<boolean | null, boolean | null | undefined, boolean | null>;
 }
 
 export interface TasksTable {

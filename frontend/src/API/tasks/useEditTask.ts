@@ -22,7 +22,7 @@ export function useEditTask() {
       // Predecessor changes can affect executability of other tasks too
       client.invalidateQueries({ queryKey: queryKeys.tasks.all }); //update all tasks
       client.invalidateQueries({
-        queryKey: queryKeys.projects.allTasks(task.project), //update all tasks of project
+        queryKey: queryKeys.projects.tasks(task.project), //update all tasks of project
       });
     },
   });

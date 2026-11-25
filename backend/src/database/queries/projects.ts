@@ -1,5 +1,5 @@
-import type { Kysely } from "kysely";
-import type { Database, NewProject, ProjectUpdate } from "../types.js";
+import { sql, type Kysely } from "kysely";
+import type { Database, NewProject, Project, ProjectUpdate } from "../types.js";
 
 type Db = Kysely<Database>;
 
@@ -10,6 +10,7 @@ const projectColumns = [
   "value",
   "description",
   "goals",
+  "goals_met",
 ] as const;
 
 export function getAllProjects(db: Db) {
@@ -53,14 +54,38 @@ export function getProjectByIdForUpdate(db: Db, projectId: string) {
     .executeTakeFirst();
 }
 
-export function updateProject(
+export async function updateProject(
   db: Db,
   projectId: string,
   changes: Pick<ProjectUpdate, "name" | "description" | "budget" | "goals">,
-) {
-  return db
+): Promise<Project> {
+  if (!db.isTransaction) {
+    return db.transaction().execute((trx) => updateProject(trx, projectId, changes));
+  }
+  await db
     .updateTable("public.projects")
     .set(changes)
+    .where("project_id", "=", projectId)
+    .executeTakeFirstOrThrow();
+  return refreshProjectGoalsMet(db, projectId);
+}
+
+// Call while holding the project row lock so task creation/execution and goal edits serialize.
+export function refreshProjectGoalsMet(db: Db, projectId: string) {
+  return db
+    .updateTable("public.projects")
+    .set({
+      goals_met: sql<boolean | null>`(
+        select case
+          when count(*) = 0 or not bool_and(executed) or public.projects.goals is null
+            then null
+          else sum(cost) < (public.projects.goals->>'cost')::numeric
+            and sum(steps) < (public.projects.goals->>'steps')::numeric
+        end
+        from public.tasks
+        where project = public.projects.project_id
+      )`,
+    })
     .where("project_id", "=", projectId)
     .returning(projectColumns)
     .executeTakeFirstOrThrow();

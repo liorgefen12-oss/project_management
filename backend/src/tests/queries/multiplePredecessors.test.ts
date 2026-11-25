@@ -51,9 +51,11 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
       expect(await getTaskById(database, taskId_3)).not.toHaveProperty(
         "predecessor_ids",
       );
-      expect(
-        (await getProjectBoardTasks(database, projectId))[2],
-      ).not.toHaveProperty("predecessor_ids");
+      const board = await getProjectBoardTasks(database, projectId);
+      expect(board[2].predecessor_ids).toEqual([
+        { predecessor_id: taskId_1 },
+        { predecessor_id: taskId_2 },
+      ]);
     });
   },
 );

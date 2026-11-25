@@ -9,7 +9,6 @@ import {
   getTaskProjectBudget,
 } from "../database/queries/tasks.js";
 import {
-  areTaskPredecessorsExecuted,
   canExecuteTask,
   isTaskWithinProjectBudget,
 } from "../functions/taskExecutionRules.js";

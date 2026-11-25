@@ -29,6 +29,25 @@ npm install
 npm run dev
 ```
 
+### Manual database setup
+
+Docker creates the schema for a new database, but does not insert users or audit
+actions. In pgAdmin, add a user with an `@outlook.com` email and a bcrypt-hashed
+password, and ensure `audit.task_actions` contains these action names:
+
+- `user log in`
+- `user log out`
+- `project sign in`
+- `project sign out`
+- `project completed`
+- `task completed`
+- `budget changed`
+- `goals changed`
+- `value changed`
+- `popup - unavailable task`
+
+Existing databases keep their data; no automatic seeding is performed.
+
 ## Environment variables
 
 - `PORT` — The port the API listens on (defaults to `3000`).
@@ -86,6 +105,21 @@ All endpoints except `/health` and `/users/login` require logging in first.
 To try the API, import `fullstack.postman_collection.json` into Postman.
 
 ## Business rules
+
+### Project goals
+
+For an existing database, ensure `public.projects` has a nullable boolean
+`goals_met` column before starting the updated backend. New databases already
+include this column in the schema. Existing results can be backfilled manually
+through pgAdmin.
+
+The API recalculates `goals_met` when a task is executed or created, or a project
+is edited. It is `NULL` for incomplete/empty projects or when no goals are set.
+For completed projects with goals, both total task cost and total task steps
+must be strictly below their respective `goals.cost` and `goals.steps` limits;
+equal to either limit means `false`. Goal edits are logged as `goals changed`.
+Direct task/goal changes in pgAdmin bypass the API and do not automatically
+recalculate `goals_met`; use the app for subsequent edits.
 
 - A task can be executed only if all its predecessors are executed and the project's budget covers its cost.
 - Executing a task subtracts its cost from the project budget and adds its value to the project value.

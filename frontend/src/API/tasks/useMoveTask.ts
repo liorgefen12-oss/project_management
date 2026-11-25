@@ -14,9 +14,6 @@ export function useMoveTask(projectId: string) {
     onSuccess: ({ tasks }) => {
       //save in cache
       client.setQueryData(queryKeys.projects.tasks(projectId), tasks);
-      client.invalidateQueries({
-        queryKey: queryKeys.projects.allTasks(projectId),
-      });
       client.invalidateQueries({ queryKey: queryKeys.tasks.all });
     },
   });

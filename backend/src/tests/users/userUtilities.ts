@@ -6,24 +6,16 @@ import { vi } from "vitest";
 import { createApp } from "../../app.js";
 import type { Database } from "../../database/db.js";
 import {
-  getLogs,
-  getLogsByProjectId,
-  getLogsByProjectName,
-  logAction,
-} from "../../database/queries/audit_logs.js";
-import {
   getUserById,
   getUserWithPasswordByEmail,
 } from "../../database/queries/users.js";
+import { logAction } from "../../database/queries/audit_logs.js";
 import { login } from "../../controllers/users.js";
 import type { SessionStore } from "../../sessionStore.js";
 
 export {
   //make the imported functions available to other files through this helper file
   //vi.mock will create mocks for this imported function
-  getLogs,
-  getLogsByProjectId,
-  getLogsByProjectName,
   getUserById,
   getUserWithPasswordByEmail,
   logAction,
@@ -39,7 +31,7 @@ export const user = {
   email: "test@outlook.com",
   password: "",
 };
-export const loginPassword = "correct-password";
+const loginPassword = "correct-password";
 export const loggedInUser = {
   user_id: user.user_id,
   first_name: user.first_name,
@@ -92,9 +84,7 @@ export function createUserApp() {
   });
   app.context.database = {} as Kysely<Database>;
   return {
-    app,
     agent: request.agent(app.callback()), //supertest client to send requests and keep cookies and sessions in between
-    sessions,
   };
 }
 

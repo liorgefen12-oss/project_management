@@ -1,5 +1,4 @@
-// validation/validate.ts
-import { Context, Next } from "koa";
+import type { Context, Next } from "koa";
 import { z } from "zod";
 
 export const validate =

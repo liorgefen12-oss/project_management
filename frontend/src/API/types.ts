@@ -19,6 +19,7 @@ export interface Project {
   value: number;
   description: string;
   goals: ProjectGoals | null;
+  goals_met: boolean | null;
 }
 
 export interface Task {
@@ -34,12 +35,9 @@ export interface Task {
 }
 
 // GET /projects/:id/tasks omits the owning project id
-export type BoardTask = Omit<Task, "project">;
-
-export interface TaskPredecessor {
-  task_id: string;
-  executed: boolean;
-}
+export type BoardTask = Omit<Task, "project"> & {
+  predecessor_ids: { predecessor_id: string }[];
+};
 
 export interface ProjectCompletion {
   project_id: string;
@@ -52,7 +50,7 @@ export type ExecutedTaskProject = Pick<
   "project_id" | "budget" | "value"
 >;
 
-export interface AuditLog {
+interface AuditLog {
   log_id: string;
   project_id: string | null;
   task_id: string | null;
@@ -60,8 +58,6 @@ export interface AuditLog {
   action_id: number;
   created_at: string;
 }
-
-export type AuditLogType = "user-logins" | "project-sign-ins-and-outs";
 
 // GET /audit-logs/projects/:id also returns the action name and who did it
 export interface ProjectAuditLog extends AuditLog {
@@ -100,7 +96,6 @@ export interface CreateTaskInput {
   steps: number;
   position: number;
   project: string;
-  executed?: boolean;
   predecessor_ids?: string[];
 }
 

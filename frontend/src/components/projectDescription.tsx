@@ -1,4 +1,5 @@
 import { useProjectCompletion } from "../API/projects/useProjectCompletion";
+import { errorMessage } from "../API/apiErrorClass";
 import type { Project } from "../API/types";
 import { getProjectGoals } from "../functions/projectGoals";
 
@@ -52,6 +53,20 @@ export default function ProjectDescription({
           {goals.cost}$ spent.
         </p>
       )}
+      <p className="project-summary__goals">
+        Goals met:{" "}
+        {completion.isPending
+          ? "Checking..."
+          : completion.error
+            ? errorMessage(completion.error)
+            : !completed
+              ? "Project isn't completed yet"
+              : project.goals_met === null
+                ? "Not set"
+                : project.goals_met
+                  ? "Yes"
+                  : "No"}
+      </p>
 
       <dl className="project-summary__stats">
         <div className="project-summary__stat">

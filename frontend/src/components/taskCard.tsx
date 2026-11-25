@@ -1,7 +1,5 @@
 import type { DragEvent } from "react";
 import type { BoardTask } from "../API/types";
-import { useTaskExecutability } from "../API/tasks/useTaskExecutability";
-import { useTaskPredecessors } from "../API/tasks/useTaskPredecessors";
 import "../styles/TaskCard.css";
 
 type TaskCardProps = {
@@ -27,19 +25,14 @@ export default function TaskCard({
   onDragStart,
   onDragEnd,
 }: TaskCardProps) {
-  const executable = useTaskExecutability(
-    task.executed ? undefined : task.task_id,
-  );
-  const predecessors = useTaskPredecessors(task.task_id);
-
-  const predecessorList = (predecessors.data ?? [])
+  const predecessorList = task.predecessor_ids
     .map((p) => {
-      const predecessor = tasksById.get(p.task_id);
+      const predecessor = tasksById.get(p.predecessor_id);
       return {
-        id: p.task_id,
+        id: p.predecessor_id,
         name: predecessor?.task_name ?? "Unknown task",
         position: predecessor?.position,
-        executed: p.executed,
+        executed: predecessor?.executed ?? false,
       };
     })
     .sort((a, b) => (a.position ?? Infinity) - (b.position ?? Infinity));
@@ -51,7 +44,9 @@ export default function TaskCard({
     .join(", ");
   //display predecessor's name + execution status
 
-  const blocked = !task.executed && executable.data === false;
+  const blocked =
+    !task.executed &&
+    predecessorList.some((predecessor) => !predecessor.executed);
 
   const classes = [
     "task-card",

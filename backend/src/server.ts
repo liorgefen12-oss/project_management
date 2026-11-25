@@ -10,6 +10,7 @@ const pool = new Pool({ connectionString: environment.DATABASE_URL });
 const database = createDatabase(pool);
 const sessionStore = new PgSessionStore(pool);
 const app = createApp({
+  //koa app
   frontendOrigin: environment.FRONTEND_ORIGIN,
   secureCookies:
     environment.SESSION_COOKIE_SECURE ?? environment.NODE_ENV === "production",
@@ -20,5 +21,7 @@ const app = createApp({
 app.context.database = database;
 
 app.listen(environment.PORT, () => {
-  console.log(`Backend listening on port ${environment.PORT}`);
+  console.log(
+    `Backend listening on port ${environment.PORT}, frontend origin is ${environment.FRONTEND_ORIGIN}`,
+  );
 });

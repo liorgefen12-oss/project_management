@@ -8,7 +8,7 @@ export async function apiFetch<T>(
   //extra request settings like http method, body...
   //default is method=GET, body=none
 ): Promise<T> {
-  const res = await fetch(`http://localhost:3000${path}`, {
+  const res = await fetch(`/api${path}`, {
     ...options,
     credentials: "include",
     headers: { "Content-Type": "application/json", ...options.headers },
