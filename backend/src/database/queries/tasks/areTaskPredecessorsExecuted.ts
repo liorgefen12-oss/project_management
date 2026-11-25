@@ -10,12 +10,8 @@ export async function areTaskPredecessorsExecuted(
   taskId: string,
   predecessors?: readonly TaskPredecessor[],
 ): Promise<boolean> {
-  const allPredecessors = predecessors ?? await getTaskAllPredecessors(
-    db,
-    taskId,
-    { includeInvalid: true },
-  );
-  return allPredecessors.every(
-    (predecessor) => predecessor.executed && !predecessor.invalid,
-  );
+  const allPredecessors =
+    predecessors ??
+    (await getTaskAllPredecessors(db, taskId, { includeInvalid: true }));
+  return allPredecessors.every((predecessor) => predecessor.executed);
 }

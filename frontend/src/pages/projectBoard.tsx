@@ -20,6 +20,7 @@ type ProjectBoardPageProps = {
   projectId: string;
   projects: Project[];
   onSelectProject: (projectId: string) => void;
+  onLeaveProject: () => void;
   onLogout: () => void;
   busy: boolean;
 };
@@ -35,6 +36,7 @@ export default function ProjectBoardPage({
   projectId,
   projects,
   onSelectProject,
+  onLeaveProject,
   onLogout,
   busy,
 }: ProjectBoardPageProps) {
@@ -83,6 +85,7 @@ export default function ProjectBoardPage({
       projects={projects}
       projectId={projectId}
       onSelectProject={onSelectProject}
+      onLeaveProject={onLeaveProject}
       onLogout={onLogout}
       busy={busy}
     />

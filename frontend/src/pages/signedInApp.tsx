@@ -10,6 +10,7 @@ import ProjectBoardPage from "./projectBoard";
 import SignIntoProject from "./signIntoProject";
 import { selectProject } from "../functions/selectProject";
 import { handleLogout } from "../functions/handleLogout";
+import { leaveProject } from "../functions/leaveProject";
 import "../styles/ErrorBanner.css";
 
 export default function SignedInApp() {
@@ -51,6 +52,8 @@ export default function SignedInApp() {
 
   const onLogout = () =>
     handleLogout({ ...sessionCtx, logout: () => logout.mutateAsync() });
+
+  const onLeaveProject = () => leaveProject(sessionCtx);
 
   const errorBanner = error && (
     <p role="alert" className="error-banner">
@@ -96,6 +99,7 @@ export default function SignedInApp() {
           projectId={projectId}
           projects={projects.data}
           onSelectProject={onSelectProject}
+          onLeaveProject={onLeaveProject}
           onLogout={onLogout}
           busy={busy}
         />

@@ -4,7 +4,6 @@ import type { Database } from "../../types.js";
 export interface TaskPredecessor {
   task_id: string;
   executed: boolean;
-  invalid?: boolean;
 }
 
 export async function getTaskAllPredecessors(

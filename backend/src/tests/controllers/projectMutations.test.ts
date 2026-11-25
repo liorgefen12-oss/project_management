@@ -34,7 +34,7 @@ describe("controller behavior", () => {
     const response = await request(app.callback())
       .post("/projects/")
       .send({ name: "New project", description: "", budget: 10 });
-    expect(response.status).toBe(201);
+    expect(response.status).toBe(201); //created
     expect(insertProject).toHaveBeenCalledWith(expect.anything(), {
       name: "New project",
       description: "",
@@ -71,7 +71,7 @@ describe("controller behavior", () => {
     );
   });
 
-  it("rejects empty or unsupported project updates", async () => {
+  it("rejects empty or non-logical project updates", async () => {
     const empty = await request(app.callback())
       .patch(`/projects/${projectId}`)
       .send({});
@@ -83,8 +83,12 @@ describe("controller behavior", () => {
   });
 
   it.each([
+    //made up goal values
     [null, { cost: 50, steps: 5 }],
-    [{ cost: 50, steps: 5 }, { cost: 60, steps: 5 }],
+    [
+      { cost: 50, steps: 5 },
+      { cost: 60, steps: 5 },
+    ],
     [{ cost: 50, steps: 5 }, null],
   ])("logs goals changing from %j to %j", async (before, after) => {
     const current = {
